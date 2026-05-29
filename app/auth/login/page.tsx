@@ -1,24 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { api, saveTokens } from "@/app/_lib/api";
 
 type Step = "credentials" | "otp";
 
-interface LoginResult {
+interface LoginResponse {
   requiresOtp: boolean;
   email?: string;
   accessToken?: string;
   refreshToken?: string;
   user?: object;
 }
-interface TokenResult { accessToken: string; refreshToken: string; user: object }
+
+interface OtpResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: object;
+}
 
 export default function LoginPage() {
-  const router = useRouter();
   const [step, setStep] = useState<Step>("credentials");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,17 +35,21 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const result = await api.post<LoginResult>("/api/v1/auth/login", { phoneOrEmail: email, password });
-      if (!result.requiresOtp && result.accessToken) {
-        // Admin: tokens returned directly, no OTP needed
-        saveTokens(result.accessToken, result.refreshToken!, result.user!);
-        router.push("/dashboard/overview");
+      const res = await api.post<LoginResponse>("/api/v1/auth/login", {
+        phoneOrEmail: email,
+        password,
+      });
+
+      if (res.requiresOtp === false && res.accessToken && res.refreshToken && res.user) {
+        // Admin: tokens issued immediately — hard redirect so layout re-reads localStorage
+        saveTokens(res.accessToken, res.refreshToken, res.user);
+        window.location.href = "/dashboard/overview";
       } else {
+        // Regular user: proceed to OTP step
         setStep("otp");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
       setLoading(false);
     }
   };
@@ -52,12 +59,14 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const result = await api.post<TokenResult>("/api/v1/auth/verify-login-otp", { email, code: otp });
-      saveTokens(result.accessToken, result.refreshToken, result.user);
-      router.push("/dashboard/overview");
+      const res = await api.post<OtpResponse>("/api/v1/auth/verify-login-otp", {
+        email,
+        code: otp,
+      });
+      saveTokens(res.accessToken, res.refreshToken, res.user);
+      window.location.href = "/dashboard/overview";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed");
-    } finally {
       setLoading(false);
     }
   };
@@ -70,54 +79,98 @@ export default function LoginPage() {
         </h1>
         <p className="text-slate-500 text-sm">
           {step === "credentials"
-            ? "Sign in to your LUI account"
+            ? "Sign in to your LUI Admin account"
             : `We sent a 6-digit code to ${email}`}
         </p>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {error}
+        </div>
       )}
 
       {step === "credentials" ? (
         <form onSubmit={handleCredentials} className="space-y-4">
           <Field label="Email address" icon={<Mail className="w-4 h-4" />}>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com" required autoFocus
-              className="w-full h-11 pl-10 pr-4 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4361EE]/30 focus:border-[#4361EE]" />
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@luipayment.com"
+              required
+              autoFocus
+              className="w-full h-11 pl-10 pr-4 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4361EE]/30 focus:border-[#4361EE]"
+            />
           </Field>
           <Field label="Password" icon={<Lock className="w-4 h-4" />}>
-            <input type={showPass ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password" required
-              className="w-full h-11 pl-10 pr-10 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4361EE]/30 focus:border-[#4361EE]" />
-            <button type="button" onClick={() => setShowPass(!showPass)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            <input
+              type={showPass ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+              className="w-full h-11 pl-10 pr-10 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4361EE]/30 focus:border-[#4361EE]"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPass(!showPass)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
               {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </Field>
           <div className="flex justify-end">
-            <Link href="/auth/forgot-password" className="text-xs text-[#4361EE] hover:underline">Forgot password?</Link>
+            <Link href="/auth/forgot-password" className="text-xs text-[#4361EE] hover:underline">
+              Forgot password?
+            </Link>
           </div>
-          <button type="submit" disabled={loading}
-            className="w-full h-11 bg-[#4361EE] hover:bg-[#3451D1] text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><span>Continue</span><ArrowRight className="w-4 h-4" /></>}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full h-11 bg-[#4361EE] hover:bg-[#3451D1] text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+          >
+            {loading ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <>
+                <span>Continue</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </button>
         </form>
       ) : (
         <form onSubmit={handleOtp} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">6-digit code</label>
-            <input type="text" inputMode="numeric" pattern="[0-9]{6}" maxLength={6}
-              value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
-              placeholder="000000" required autoFocus
-              className="w-full h-14 rounded-lg border border-slate-200 bg-white text-2xl font-bold text-center text-slate-900 tracking-widest placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4361EE]/30 focus:border-[#4361EE]" />
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">
+              6-digit code
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]{6}"
+              maxLength={6}
+              value={otp}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+              placeholder="000000"
+              required
+              autoFocus
+              className="w-full h-14 rounded-lg border border-slate-200 bg-white text-2xl font-bold text-center text-slate-900 tracking-widest placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4361EE]/30 focus:border-[#4361EE]"
+            />
           </div>
-          <button type="submit" disabled={loading || otp.length < 6}
-            className="w-full h-11 bg-[#4361EE] hover:bg-[#3451D1] text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
+          <button
+            type="submit"
+            disabled={loading || otp.length < 6}
+            className="w-full h-11 bg-[#4361EE] hover:bg-[#3451D1] text-white font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
+          >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify & Sign In"}
           </button>
-          <button type="button" onClick={() => { setStep("credentials"); setOtp(""); setError(""); }}
-            className="w-full h-10 text-sm text-slate-500 hover:text-slate-700">
+          <button
+            type="button"
+            onClick={() => { setStep("credentials"); setOtp(""); setError(""); }}
+            className="w-full h-10 text-sm text-slate-500 hover:text-slate-700"
+          >
             ← Back
           </button>
         </form>
@@ -125,13 +178,23 @@ export default function LoginPage() {
 
       <p className="mt-6 text-center text-sm text-slate-500">
         Don&apos;t have an account?{" "}
-        <Link href="/auth/register" className="text-[#4361EE] font-semibold hover:underline">Create account</Link>
+        <Link href="/auth/register" className="text-[#4361EE] font-semibold hover:underline">
+          Create account
+        </Link>
       </p>
     </div>
   );
 }
 
-function Field({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
+function Field({
+  label,
+  icon,
+  children,
+}: {
+  label: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <label className="block text-sm font-medium text-slate-700 mb-1.5">{label}</label>
