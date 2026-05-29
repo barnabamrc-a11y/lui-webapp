@@ -43,7 +43,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await api.post<LoginResponse>("/api/v1/auth/login", {
-        phoneOrEmail: email,
+        phoneOrEmail: email.trim().toLowerCase(),
         password,
       });
 
