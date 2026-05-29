@@ -1,19 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Loader2, ChevronRight, Plus } from "lucide-react";
 import { userApi } from "@/app/_lib/user-api";
 import { fmt, fmtDate } from "@/app/app/_lib/fmt";
+import { connectSocket } from "@/app/_lib/socket";
 
 interface Order {
   id: string; order_number: string; product: string; total: string;
   status: string; created_at: string; buyer_name: string | null;
 }
 
-const TABS = ["all", "pending", "ready_to_ship", "in_transit", "delivered", "completed", "disputed"] as const;
+const TABS = ["all", "awaiting_acceptance", "pending", "ready_to_ship", "in_transit", "delivered", "completed", "disputed"] as const;
 
 const STATUS_COLORS: Record<string, string> = {
+  awaiting_acceptance: "bg-[#4361EE]/20 text-[#4f8eff] border-[#4361EE]/30",
+  accepted:      "bg-teal-500/20 text-teal-400 border-teal-500/30",
   pending:       "bg-amber-500/20 text-amber-400 border-amber-500/30",
   ready_to_ship: "bg-sky-500/20 text-sky-400 border-sky-500/30",
   in_transit:    "bg-blue-500/20 text-blue-400 border-blue-500/30",
@@ -28,13 +31,24 @@ export default function SellerOrders() {
   const [orders,  setOrders]  = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     setLoading(true);
     const q = filter === "all" ? "" : `&status=${filter}`;
     userApi.get<{ data: Order[] }>(`/api/v1/orders?limit=50${q}`)
       .then((r) => setOrders(r.data))
       .finally(() => setLoading(false));
   }, [filter]);
+
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const sock = connectSocket();
+    if (!sock) return;
+    const onUpd = () => load();
+    sock.on("order:updated", onUpd);
+    sock.on("notification:new", onUpd);
+    return () => { sock.off("order:updated", onUpd); sock.off("notification:new", onUpd); };
+  }, [load]);
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">

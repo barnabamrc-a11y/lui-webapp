@@ -1,20 +1,24 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronLeft, MessageCircle, Loader2, Truck, Package, CheckCircle2, Copy } from "lucide-react";
 import { userApi } from "@/app/_lib/user-api";
 import { fmt, fmtDate } from "@/app/app/_lib/fmt";
+import { connectSocket } from "@/app/_lib/socket";
 
 interface Order {
   id: string; order_number: string; product: string; description: string | null;
   quantity: number; price: string; delivery_fee: string; total: string; lui_fee: string;
   status: string; created_at: string; buyer_name: string | null; buyer_location: string | null;
-  seller_name: string;
+  seller_name: string; image_url: string | null; buyer_address: Record<string, string> | null;
+  decline_reason: string | null;
 }
 
 const NEXT_STATUS: Record<string, { label: string; value: string; icon: React.ElementType }> = {
   pending:       { label: "Mark as Preparing",  value: "ready_to_ship", icon: Package },
+  accepted:      { label: "Mark as Preparing",  value: "ready_to_ship", icon: Package },
   ready_to_ship: { label: "Mark as Dispatched", value: "in_transit",    icon: Truck   },
   in_transit:    { label: "Mark as Delivered",  value: "delivered",     icon: CheckCircle2 },
 };
@@ -27,9 +31,20 @@ export default function SellerOrderDetail({ params }: { params: Promise<{ id: st
   const [error,   setError]   = useState("");
   const [copied,  setCopied]  = useState(false);
 
-  useEffect(() => {
-    userApi.get<Order>(`/api/v1/orders/${id}`).then(setOrder).finally(() => setLoading(false));
+  const load = useCallback(async () => {
+    try { setOrder(await userApi.get<Order>(`/api/v1/orders/${id}`)); }
+    finally { setLoading(false); }
   }, [id]);
+
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const sock = connectSocket();
+    if (!sock) return;
+    const onUpd = () => load();
+    sock.on("order:updated", onUpd);
+    return () => { sock.off("order:updated", onUpd); };
+  }, [load]);
 
   const updateStatus = async (newStatus: string) => {
     setActing(true); setError("");
@@ -85,10 +100,25 @@ export default function SellerOrderDetail({ params }: { params: Promise<{ id: st
           <p className="text-[#8b9ab4] text-xs mb-1">Current Status</p>
           <p className="text-white font-semibold capitalize">{order.status.replace(/_/g, " ")}</p>
         </div>
-        {!order.buyer_name && order.status === "pending" && (
-          <span className="text-xs bg-amber-500/20 text-amber-400 px-3 py-1 rounded-full">Awaiting buyer</span>
+        {order.status === "awaiting_acceptance" && (
+          <span className="text-xs bg-[#4361EE]/20 text-[#4f8eff] px-3 py-1 rounded-full">Awaiting buyer acceptance</span>
+        )}
+        {order.status === "accepted" && (
+          <span className="text-xs bg-teal-500/20 text-teal-400 px-3 py-1 rounded-full">Buyer setting address</span>
         )}
       </div>
+
+      {order.status === "cancelled" && order.decline_reason && (
+        <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">
+          Buyer declined: {order.decline_reason}
+        </div>
+      )}
+
+      {order.image_url && (
+        <div className="relative w-full h-48 rounded-2xl overflow-hidden border border-[#1a3060]">
+          <Image src={order.image_url} alt={order.product} fill className="object-cover" unoptimized />
+        </div>
+      )}
 
       {/* Details */}
       <div className="bg-[#0d1f35] border border-[#1a3060] rounded-2xl p-5 space-y-3">
@@ -96,7 +126,9 @@ export default function SellerOrderDetail({ params }: { params: Promise<{ id: st
         <Row label="Product"  value={order.product} />
         {order.description && <Row label="Description" value={order.description} />}
         {order.buyer_name && <Row label="Buyer" value={order.buyer_name} />}
-        {order.buyer_location && <Row label="Delivery" value={order.buyer_location} />}
+        {order.buyer_address && (
+          <Row label="Delivery" value={[order.buyer_address.address1, order.buyer_address.city, order.buyer_address.country].filter(Boolean).join(", ")} />
+        )}
         <div className="border-t border-[#1a3060] pt-3 space-y-2">
           <Row label="Price"        value={`TZS ${fmt(order.price)} × ${order.quantity}`} />
           <Row label="Delivery fee" value={`TZS ${fmt(order.delivery_fee)}`} />

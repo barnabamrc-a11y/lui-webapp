@@ -4,6 +4,7 @@ import {
   ShieldCheck, Zap, Scale, Users, TrendingUp, Clock,
   ArrowRight, CheckCircle, Globe, Star
 } from "lucide-react";
+import { LangSwitch } from "./_components/lang-switch";
 
 export default function LandingPage() {
   return (
@@ -38,6 +39,7 @@ function Nav() {
           ))}
         </nav>
         <div className="flex items-center gap-3">
+          <LangSwitch />
           <Link href="/auth/login"
             className="text-sm font-medium text-slate-700 hover:text-slate-900 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors">
             Sign In

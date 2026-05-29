@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Wallet, ArrowRight, Loader2, Plus, TrendingUp, Lock, Clock } from "lucide-react";
 import { userApi, getStoredUser } from "@/app/_lib/user-api";
 import { fmt } from "@/app/app/_lib/fmt";
+import { connectSocket } from "@/app/_lib/socket";
 
 interface WalletData { available_balance: string; frozen_balance: string; pending_balance: string; }
 interface Order { id: string; order_number: string; product: string; total: string; status: string; created_at: string; buyer_name: string | null; }
@@ -25,13 +26,26 @@ export default function SellerHome() {
   const user = getStoredUser<{ name: string }>();
   const firstName = user?.name?.split(" ")[0] ?? "there";
 
-  useEffect(() => {
-    Promise.all([
-      userApi.get<WalletData>("/api/v1/wallet"),
-      userApi.get<{ data: Order[] }>("/api/v1/orders?limit=5"),
-    ]).then(([w, o]) => { setWallet(w); setOrders(o.data); })
-      .finally(() => setLoading(false));
+  const load = useCallback(async () => {
+    try {
+      const [w, o] = await Promise.all([
+        userApi.get<WalletData>("/api/v1/wallet"),
+        userApi.get<{ data: Order[] }>("/api/v1/orders?limit=5"),
+      ]);
+      setWallet(w); setOrders(o.data);
+    } finally { setLoading(false); }
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const sock = connectSocket();
+    if (!sock) return;
+    const onUpd = () => load();
+    sock.on("order:updated", onUpd);
+    sock.on("notification:new", onUpd);
+    return () => { sock.off("order:updated", onUpd); sock.off("notification:new", onUpd); };
+  }, [load]);
 
   const active    = orders.filter((o) => !["completed", "cancelled", "refunded"].includes(o.status)).length;
   const completed = orders.filter((o) => o.status === "completed").length;
