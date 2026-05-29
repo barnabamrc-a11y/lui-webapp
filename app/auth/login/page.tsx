@@ -52,6 +52,8 @@ export default function LoginPage() {
         saveTokens(res.accessToken, res.refreshToken, res.user);
         redirectForRole(res.user.role);
       } else {
+        // Use the canonical email the server stored the OTP against (not what the user typed)
+        if (res.email) setEmail(res.email);
         setStep("otp");
       }
     } catch (err) {

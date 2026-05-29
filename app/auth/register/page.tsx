@@ -34,9 +34,10 @@ export default function RegisterPage() {
     setError("");
     setLoading(true);
     try {
+      const canonicalEmail = form.email.trim().toLowerCase();
       await api.post("/api/v1/auth/register", {
         name: form.name.trim(),
-        email: form.email.trim().toLowerCase() || undefined,
+        email: canonicalEmail || undefined,
         phone: form.phone.trim() || undefined,
         password: form.password,
         role,
@@ -44,6 +45,9 @@ export default function RegisterPage() {
           ? { businessName: form.businessName.trim() }
           : {}),
       });
+      // Explicitly trigger the verification OTP email after account creation
+      await api.post("/api/v1/auth/send-otp", { email: canonicalEmail, purpose: "verify_phone" });
+      setForm((f) => ({ ...f, email: canonicalEmail })); // ensure lowercase for OTP lookup
       setStep("otp");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
