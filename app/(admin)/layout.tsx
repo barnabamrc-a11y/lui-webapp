@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard, Users, ShoppingBag, Scale, CreditCard,
-  Wallet, Settings, LogOut, Bell, ChevronDown, Menu, X
+  Wallet, Settings, LogOut, Bell, ChevronDown, Menu, X, Shield
 } from "lucide-react";
 import { clearTokens, getStoredUser } from "@/app/_lib/api";
 
@@ -19,6 +19,7 @@ const NAV = [
   { href: "/dashboard/disputes", label: "Disputes", icon: Scale },
   { href: "/dashboard/transactions", label: "Transactions", icon: CreditCard },
   { href: "/dashboard/wallets", label: "Wallets", icon: Wallet },
+  { href: "/dashboard/admins", label: "Admins", icon: Shield },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

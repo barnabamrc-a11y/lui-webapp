@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { api, saveTokens } from "@/app/_lib/api";
+import { saveUserTokens } from "@/app/_lib/user-api";
 
 type Step = "credentials" | "otp";
 
@@ -12,13 +13,19 @@ interface LoginResponse {
   email?: string;
   accessToken?: string;
   refreshToken?: string;
-  user?: object;
+  user?: { id: string; name: string; role: string; email: string | null; phone: string | null };
 }
 
 interface OtpResponse {
   accessToken: string;
   refreshToken: string;
-  user: object;
+  user: { id: string; name: string; role: string; email: string | null; phone: string | null };
+}
+
+function redirectForRole(role: string) {
+  if (role === "admin")        window.location.href = "/dashboard/overview";
+  else if (role === "seller")  window.location.href = "/app/seller";
+  else                         window.location.href = "/app/buyer";
 }
 
 export default function LoginPage() {
@@ -41,11 +48,10 @@ export default function LoginPage() {
       });
 
       if (res.requiresOtp === false && res.accessToken && res.refreshToken && res.user) {
-        // Admin: tokens issued immediately — hard redirect so layout re-reads localStorage
+        // Admin: tokens issued immediately, no OTP needed
         saveTokens(res.accessToken, res.refreshToken, res.user);
-        window.location.href = "/dashboard/overview";
+        redirectForRole(res.user.role);
       } else {
-        // Regular user: proceed to OTP step
         setStep("otp");
       }
     } catch (err) {
@@ -63,8 +69,12 @@ export default function LoginPage() {
         email,
         code: otp,
       });
-      saveTokens(res.accessToken, res.refreshToken, res.user);
-      window.location.href = "/dashboard/overview";
+      if (res.user.role === "admin") {
+        saveTokens(res.accessToken, res.refreshToken, res.user);
+      } else {
+        saveUserTokens(res.accessToken, res.refreshToken, res.user);
+      }
+      redirectForRole(res.user.role);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed");
       setLoading(false);
@@ -79,7 +89,7 @@ export default function LoginPage() {
         </h1>
         <p className="text-slate-500 text-sm">
           {step === "credentials"
-            ? "Sign in to your LUI Admin account"
+            ? "Sign in to your LUI account"
             : `We sent a 6-digit code to ${email}`}
         </p>
       </div>
@@ -92,12 +102,12 @@ export default function LoginPage() {
 
       {step === "credentials" ? (
         <form onSubmit={handleCredentials} className="space-y-4">
-          <Field label="Email address" icon={<Mail className="w-4 h-4" />}>
+          <Field label="Email or phone" icon={<Mail className="w-4 h-4" />}>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@luipayment.com"
+              placeholder="you@example.com"
               required
               autoFocus
               className="w-full h-11 pl-10 pr-4 rounded-lg border border-slate-200 bg-white text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4361EE]/30 focus:border-[#4361EE]"
@@ -143,9 +153,7 @@ export default function LoginPage() {
       ) : (
         <form onSubmit={handleOtp} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              6-digit code
-            </label>
+            <label className="block text-sm font-medium text-slate-700 mb-1.5">6-digit code</label>
             <input
               type="text"
               inputMode="numeric"

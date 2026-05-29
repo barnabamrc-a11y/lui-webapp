@@ -2,15 +2,27 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { User, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
+import { User, Mail, Lock, Phone, Eye, EyeOff, Loader2, Store, ShoppingBag } from "lucide-react";
 import { api } from "@/app/_lib/api";
+import { saveUserTokens } from "@/app/_lib/user-api";
+
+type Step = "form" | "otp";
+type Role = "buyer" | "seller";
+
+interface VerifyResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: { id: string; name: string; role: string; email: string | null; phone: string | null };
+}
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
+  const [role, setRole] = useState<Role>("buyer");
+  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "", businessName: "" });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [done, setDone] = useState(false);
+  const [step, setStep] = useState<Step>("form");
+  const [otp, setOtp] = useState("");
 
   const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -24,11 +36,15 @@ export default function RegisterPage() {
     try {
       await api.post("/api/v1/auth/register", {
         name: form.name.trim(),
-        email: form.email.trim().toLowerCase(),
+        email: form.email.trim().toLowerCase() || undefined,
+        phone: form.phone.trim() || undefined,
         password: form.password,
-        role: "buyer",
+        role,
+        ...(role === "seller" && form.businessName.trim()
+          ? { businessName: form.businessName.trim() }
+          : {}),
       });
-      setDone(true);
+      setStep("otp");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {
@@ -36,22 +52,69 @@ export default function RegisterPage() {
     }
   };
 
-  if (done) {
+  const handleOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const res = await api.post<VerifyResponse>("/api/v1/auth/verify-otp", {
+        email: form.email.trim().toLowerCase(),
+        code: otp,
+        purpose: "verify_phone",
+      });
+      saveUserTokens(res.accessToken, res.refreshToken, res.user);
+      window.location.href = role === "seller" ? "/app/seller" : "/app/buyer";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Verification failed");
+      setLoading(false);
+    }
+  };
+
+  if (step === "otp") {
     return (
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center">
-        <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-7 h-7 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-          </svg>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-slate-900 mb-1">Verify your email</h1>
+          <p className="text-slate-500 text-sm">
+            We sent a 6-digit code to <strong>{form.email}</strong>
+          </p>
         </div>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">Account Created!</h2>
-        <p className="text-slate-500 text-sm mb-6">
-          A verification code has been sent to <strong>{form.email}</strong>. Check your inbox to activate your account.
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
+        )}
+        <form onSubmit={handleOtp} className="space-y-4">
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]{6}"
+            maxLength={6}
+            value={otp}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, ""))}
+            placeholder="000000"
+            required
+            autoFocus
+            className="w-full h-14 rounded-lg border border-slate-200 bg-white text-2xl font-bold text-center text-slate-900 tracking-widest placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4361EE]/30 focus:border-[#4361EE]"
+          />
+          <button
+            type="submit"
+            disabled={loading || otp.length < 6}
+            className="w-full h-11 bg-[#4361EE] hover:bg-[#3451D1] text-white font-semibold rounded-lg flex items-center justify-center transition-colors disabled:opacity-60"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Activate Account"}
+          </button>
+        </form>
+        <p className="mt-4 text-center text-xs text-slate-400">
+          Didn&apos;t receive it?{" "}
+          <button
+            onClick={async () => {
+              try { await api.post("/api/v1/auth/send-otp", { email: form.email, purpose: "verify_phone" }); }
+              catch {}
+            }}
+            className="text-[#4361EE] hover:underline"
+          >
+            Resend code
+          </button>
         </p>
-        <Link href="/auth/login"
-          className="inline-flex items-center justify-center w-full h-11 bg-[#4361EE] hover:bg-[#3451D1] text-white font-semibold rounded-lg transition-colors">
-          Continue to Sign In
-        </Link>
       </div>
     );
   }
@@ -63,6 +126,33 @@ export default function RegisterPage() {
         <p className="text-slate-500 text-sm">Join LUI and transact with confidence</p>
       </div>
 
+      {/* Role selector */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        {(["buyer", "seller"] as Role[]).map((r) => (
+          <button
+            key={r}
+            type="button"
+            onClick={() => setRole(r)}
+            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+              role === r
+                ? "border-[#4361EE] bg-[#4361EE]/5"
+                : "border-slate-200 hover:border-slate-300"
+            }`}
+          >
+            {r === "buyer"
+              ? <ShoppingBag className={`w-6 h-6 ${role === r ? "text-[#4361EE]" : "text-slate-400"}`} />
+              : <Store       className={`w-6 h-6 ${role === r ? "text-[#4361EE]" : "text-slate-400"}`} />
+            }
+            <span className={`text-sm font-semibold ${role === r ? "text-[#4361EE]" : "text-slate-600"}`}>
+              {r === "buyer" ? "I'm a Buyer" : "I'm a Seller"}
+            </span>
+            <span className="text-xs text-slate-400 text-center">
+              {r === "buyer" ? "Pay securely via escrow" : "Sell & get paid safely"}
+            </span>
+          </button>
+        ))}
+      </div>
+
       {error && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">{error}</div>
       )}
@@ -70,13 +160,26 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormField label="Full Name" icon={<User className="w-4 h-4" />}>
           <input type="text" value={form.name} onChange={update("name")} placeholder="Amina Hassan"
-            required autoFocus
-            className="input-field" />
+            required autoFocus className="input-field" />
         </FormField>
+
+        {role === "seller" && (
+          <FormField label="Business Name" icon={<Store className="w-4 h-4" />}>
+            <input type="text" value={form.businessName} onChange={update("businessName")}
+              placeholder="Your Shop Name" className="input-field" />
+          </FormField>
+        )}
+
         <FormField label="Email Address" icon={<Mail className="w-4 h-4" />}>
           <input type="email" value={form.email} onChange={update("email")} placeholder="you@example.com"
             required className="input-field" />
         </FormField>
+
+        <FormField label="Phone (optional)" icon={<Phone className="w-4 h-4" />}>
+          <input type="tel" value={form.phone} onChange={update("phone")} placeholder="+255 712 345 678"
+            className="input-field" />
+        </FormField>
+
         <FormField label="Password" icon={<Lock className="w-4 h-4" />}>
           <input type={showPass ? "text" : "password"} value={form.password} onChange={update("password")}
             placeholder="At least 8 characters" required className="input-field pr-10" />
@@ -85,6 +188,7 @@ export default function RegisterPage() {
             {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         </FormField>
+
         <FormField label="Confirm Password" icon={<Lock className="w-4 h-4" />}>
           <input type="password" value={form.confirm} onChange={update("confirm")}
             placeholder="Repeat password" required className="input-field" />

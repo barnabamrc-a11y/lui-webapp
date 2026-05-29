@@ -80,3 +80,24 @@ body {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
 }
+
+/* Dark-theme input used in /app/seller and /app/buyer */
+.app-input {
+  width: 100%;
+  height: 2.75rem;
+  padding-left: 2.25rem;
+  padding-right: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #1a3060;
+  font-size: 0.875rem;
+  color: #ffffff;
+  background: #07101e;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.app-input::placeholder { color: rgba(79,142,255,0.3); }
+.app-input:focus { border-color: #4361EE; }
+
+/* Hide scrollbar while preserving scroll */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
