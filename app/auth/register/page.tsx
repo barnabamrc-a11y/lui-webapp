@@ -18,7 +18,8 @@ interface VerifyResponse {
 export default function RegisterPage() {
   const [role, setRole] = useState<Role>("buyer");
   const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", confirm: "", businessName: "" });
-  const [showPass, setShowPass] = useState(false);
+  const [showPass, setShowPass]    = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [step, setStep] = useState<Step>("form");
@@ -194,8 +195,12 @@ export default function RegisterPage() {
         </FormField>
 
         <FormField label="Confirm Password" icon={<Lock className="w-4 h-4" />}>
-          <input type="password" value={form.confirm} onChange={update("confirm")}
-            placeholder="Repeat password" required className="input-field" />
+          <input type={showConfirm ? "text" : "password"} value={form.confirm} onChange={update("confirm")}
+            placeholder="Repeat password" required className="input-field pr-10" />
+          <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
+            {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
         </FormField>
 
         <p className="text-xs text-slate-400">
