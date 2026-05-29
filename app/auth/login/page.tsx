@@ -8,7 +8,13 @@ import { api, saveTokens } from "@/app/_lib/api";
 
 type Step = "credentials" | "otp";
 
-interface LoginResult { requiresOtp: boolean; email: string }
+interface LoginResult {
+  requiresOtp: boolean;
+  email?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  user?: object;
+}
 interface TokenResult { accessToken: string; refreshToken: string; user: object }
 
 export default function LoginPage() {
@@ -26,8 +32,14 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      await api.post<LoginResult>("/api/v1/auth/login", { phoneOrEmail: email, password });
-      setStep("otp");
+      const result = await api.post<LoginResult>("/api/v1/auth/login", { phoneOrEmail: email, password });
+      if (!result.requiresOtp && result.accessToken) {
+        // Admin: tokens returned directly, no OTP needed
+        saveTokens(result.accessToken, result.refreshToken!, result.user!);
+        router.push("/dashboard/overview");
+      } else {
+        setStep("otp");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {
