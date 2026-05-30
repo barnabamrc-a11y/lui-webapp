@@ -23,6 +23,13 @@ export function clearUserTokens() {
   localStorage.removeItem(USER_KEY);
 }
 
+export function updateStoredUser(patch: Record<string, unknown>) {
+  if (typeof window === "undefined") return;
+  const raw = localStorage.getItem(USER_KEY);
+  const current = raw ? JSON.parse(raw) : {};
+  localStorage.setItem(USER_KEY, JSON.stringify({ ...current, ...patch }));
+}
+
 export function getStoredUser<T>(): T | null {
   if (typeof window === "undefined") return null;
   const raw = localStorage.getItem(USER_KEY);

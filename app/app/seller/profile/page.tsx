@@ -1,13 +1,43 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Phone, LogOut, ChevronRight, Building2, ArrowLeftRight, Loader2 } from "lucide-react";
-import { getStoredUser, clearUserTokens, userApi } from "@/app/_lib/user-api";
+import { Mail, Phone, LogOut, ChevronRight, Building2, ArrowLeftRight, Loader2, Pencil, Check, X } from "lucide-react";
+import { getStoredUser, clearUserTokens, userApi, updateStoredUser } from "@/app/_lib/user-api";
+
+function formatTzPhone(raw: string): string {
+  const p = raw.replace(/[^\d]/g, "");
+  if (p.startsWith("255")) return p;
+  if (p.startsWith("0")) return "255" + p.slice(1);
+  if (p.length === 9) return "255" + p;
+  return p;
+}
 
 export default function SellerProfile() {
   const user = getStoredUser<{ name: string; email: string | null; phone: string | null; referral_code?: string }>();
   const [loggingOut, setLoggingOut] = useState(false);
   const [switching, setSwitching]   = useState(false);
+
+  const [phone, setPhone]               = useState(user?.phone ?? "");
+  const [editingPhone, setEditingPhone] = useState(false);
+  const [phoneInput, setPhoneInput]     = useState(user?.phone ?? "");
+  const [savingPhone, setSavingPhone]   = useState(false);
+  const [phoneError, setPhoneError]     = useState("");
+
+  const savePhone = async () => {
+    const formatted = formatTzPhone(phoneInput);
+    if (!/^255[67]\d{8}$/.test(formatted)) { setPhoneError("Enter a valid Tanzanian phone number"); return; }
+    setSavingPhone(true); setPhoneError("");
+    try {
+      const res = await userApi.patch<{ phone: string }>("/api/v1/users/me", { phone: formatted });
+      setPhone(res.phone);
+      updateStoredUser({ phone: res.phone });
+      setEditingPhone(false);
+    } catch (e) {
+      setPhoneError(e instanceof Error ? e.message : "Could not update phone");
+    } finally {
+      setSavingPhone(false);
+    }
+  };
 
   const logout = () => {
     setLoggingOut(true);
@@ -54,15 +84,42 @@ export default function SellerProfile() {
             </div>
           </div>
         )}
-        {user?.phone && (
-          <div className="flex items-center gap-3 p-4 border-b border-[#1a3060]">
+        <div className="p-4 border-b border-[#1a3060]">
+          <div className="flex items-center gap-3">
             <Phone className="w-4 h-4 text-[#4f8eff] flex-shrink-0" />
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-[#8b9ab4] text-xs">Phone</p>
-              <p className="text-white text-sm">{user.phone}</p>
+              {editingPhone ? (
+                <div className="flex items-center gap-2 mt-1">
+                  <input
+                    value={phoneInput}
+                    onChange={(e) => setPhoneInput(e.target.value)}
+                    placeholder="07XX XXX XXX"
+                    autoFocus
+                    className="flex-1 h-9 px-3 rounded-lg bg-[#07101e] border border-[#1a3060] text-white text-sm focus:outline-none focus:border-[#4361EE]"
+                  />
+                  <button onClick={savePhone} disabled={savingPhone}
+                    className="w-9 h-9 rounded-lg bg-emerald-500 hover:bg-emerald-600 flex items-center justify-center flex-shrink-0">
+                    {savingPhone ? <Loader2 className="w-4 h-4 text-white animate-spin" /> : <Check className="w-4 h-4 text-white" />}
+                  </button>
+                  <button onClick={() => { setEditingPhone(false); setPhoneInput(phone); setPhoneError(""); }}
+                    className="w-9 h-9 rounded-lg bg-[#1a3060] flex items-center justify-center flex-shrink-0">
+                    <X className="w-4 h-4 text-[#8b9ab4]" />
+                  </button>
+                </div>
+              ) : (
+                <p className="text-white text-sm">{phone || "Not set"}</p>
+              )}
             </div>
+            {!editingPhone && (
+              <button onClick={() => { setEditingPhone(true); setPhoneInput(phone); }}
+                className="text-[#4f8eff] hover:text-white transition-colors flex-shrink-0">
+                <Pencil className="w-4 h-4" />
+              </button>
+            )}
           </div>
-        )}
+          {phoneError && <p className="text-red-400 text-xs mt-2 ml-7">{phoneError}</p>}
+        </div>
         {user?.referral_code && (
           <div className="flex items-center gap-3 p-4">
             <Building2 className="w-4 h-4 text-[#4f8eff] flex-shrink-0" />
