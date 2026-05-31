@@ -17,8 +17,7 @@ interface Order {
 }
 
 const NEXT_STATUS: Record<string, { label: string; value: string; icon: React.ElementType }> = {
-  pending:       { label: "Mark as Preparing",  value: "ready_to_ship", icon: Package },
-  accepted:      { label: "Mark as Preparing",  value: "ready_to_ship", icon: Package },
+  paid:          { label: "Mark as Preparing",  value: "ready_to_ship", icon: Package },
   ready_to_ship: { label: "Mark as Dispatched", value: "in_transit",    icon: Truck   },
   in_transit:    { label: "Mark as Delivered",  value: "delivered",     icon: CheckCircle2 },
 };
@@ -105,6 +104,9 @@ export default function SellerOrderDetail({ params }: { params: Promise<{ id: st
         )}
         {order.status === "accepted" && (
           <span className="text-xs bg-teal-500/20 text-teal-400 px-3 py-1 rounded-full">Buyer setting address</span>
+        )}
+        {order.status === "paid" && (
+          <span className="text-xs bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full">Paid · funds in escrow</span>
         )}
       </div>
 

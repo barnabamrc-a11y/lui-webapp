@@ -14,7 +14,9 @@ interface Order {
 const TABS = ["all", "pending", "in_transit", "delivered", "completed", "disputed"] as const;
 
 const STATUS_COLORS: Record<string, string> = {
+  awaiting_acceptance: "bg-[#4361EE]/20 text-[#4f8eff] border-[#4361EE]/30",
   pending:      "bg-amber-500/20 text-amber-400 border-amber-500/30",
+  paid:         "bg-teal-500/20 text-teal-400 border-teal-500/30",
   in_transit:   "bg-blue-500/20 text-blue-400 border-blue-500/30",
   delivered:    "bg-purple-500/20 text-purple-400 border-purple-500/30",
   completed:    "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
@@ -78,7 +80,7 @@ export default function BuyerOrders() {
               <div className="text-right flex-shrink-0 space-y-1">
                 <p className="text-white text-sm font-bold">TZS {fmt(o.total)}</p>
                 <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium border ${STATUS_COLORS[o.status] ?? "bg-slate-500/20 text-slate-400 border-slate-500/30"}`}>
-                  {o.status.replace("_", " ")}
+                  {o.status.replace(/_/g, " ")}
                 </span>
               </div>
               <ChevronRight className="w-4 h-4 text-[#8b9ab4] flex-shrink-0" />

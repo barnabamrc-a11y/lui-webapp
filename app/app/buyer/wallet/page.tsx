@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Loader2, ArrowUpRight, ArrowDownLeft, Lock, Share2 } from "lucide-react";
 import { userApi, getStoredUser } from "@/app/_lib/user-api";
+import { connectSocket } from "@/app/_lib/socket";
 import { fmt, fmtDate } from "@/app/app/_lib/fmt";
 
 interface Wallet { available_balance: string; frozen_balance: string; pending_balance: string; }
@@ -24,13 +25,24 @@ export default function BuyerWallet() {
   const [loading,  setLoading]  = useState(true);
   const user = getStoredUser<{ referral_code?: string }>();
 
-  useEffect(() => {
-    Promise.all([
+  const load = useCallback(async () => {
+    const [w, t] = await Promise.all([
       userApi.get<Wallet>("/api/v1/wallet"),
       userApi.get<{ data: Tx[] }>("/api/v1/wallet/transactions?limit=30"),
-    ]).then(([w, t]) => { setWallet(w); setTxs(t.data); })
-      .finally(() => setLoading(false));
+    ]);
+    setWallet(w); setTxs(t.data);
   }, []);
+
+  useEffect(() => { load().finally(() => setLoading(false)); }, [load]);
+
+  useEffect(() => {
+    const sock = connectSocket();
+    if (!sock) return;
+    const onChange = () => load();
+    sock.on("wallet:updated", onChange);
+    sock.on("notification:new", onChange);
+    return () => { sock.off("wallet:updated", onChange); sock.off("notification:new", onChange); };
+  }, [load]);
 
   if (loading) return (
     <div className="flex items-center justify-center h-48">

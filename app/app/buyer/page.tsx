@@ -13,6 +13,7 @@ interface Order { id: string; order_number: string; product: string; total: stri
 const STATUS_COLORS: Record<string, string> = {
   awaiting_acceptance: "bg-[#4361EE]/20 text-[#4f8eff]",
   pending:      "bg-amber-500/20 text-amber-400",
+  paid:         "bg-teal-500/20 text-teal-400",
   in_transit:   "bg-blue-500/20 text-blue-400",
   delivered:    "bg-purple-500/20 text-purple-400",
   completed:    "bg-emerald-500/20 text-emerald-400",

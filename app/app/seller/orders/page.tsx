@@ -12,12 +12,13 @@ interface Order {
   status: string; created_at: string; buyer_name: string | null;
 }
 
-const TABS = ["all", "awaiting_acceptance", "pending", "ready_to_ship", "in_transit", "delivered", "completed", "disputed"] as const;
+const TABS = ["all", "awaiting_acceptance", "paid", "ready_to_ship", "in_transit", "delivered", "completed", "disputed"] as const;
 
 const STATUS_COLORS: Record<string, string> = {
   awaiting_acceptance: "bg-[#4361EE]/20 text-[#4f8eff] border-[#4361EE]/30",
   accepted:      "bg-teal-500/20 text-teal-400 border-teal-500/30",
   pending:       "bg-amber-500/20 text-amber-400 border-amber-500/30",
+  paid:          "bg-teal-500/20 text-teal-400 border-teal-500/30",
   ready_to_ship: "bg-sky-500/20 text-sky-400 border-sky-500/30",
   in_transit:    "bg-blue-500/20 text-blue-400 border-blue-500/30",
   delivered:     "bg-purple-500/20 text-purple-400 border-purple-500/30",

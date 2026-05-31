@@ -24,6 +24,7 @@ const STATUS_LABEL: Record<string, string> = {
   awaiting_acceptance: "Awaiting your acceptance",
   accepted:            "Accepted — set delivery address",
   pending:             "Awaiting payment",
+  paid:                "Paid — held in escrow",
   ready_to_ship:       "Preparing",
   in_transit:          "On the way",
   delivered:           "Delivered",
