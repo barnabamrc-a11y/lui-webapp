@@ -59,16 +59,22 @@ export default function BuyerWallet() {
       <div className="bg-gradient-to-br from-[#4361EE] to-[#3451D1] rounded-2xl p-6">
         <p className="text-blue-200 text-sm mb-1">Available Balance</p>
         <p className="text-3xl font-bold text-white mb-4">TZS {fmt(wallet?.available_balance ?? "0")}</p>
-        <div className="grid grid-cols-2 gap-3">
-          {parseFloat(wallet?.frozen_balance ?? "0") > 0 && (
-            <div className="bg-white/10 rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Lock className="w-3 h-3 text-blue-200" />
-                <span className="text-blue-200 text-xs">In Escrow</span>
-              </div>
-              <p className="text-white font-bold text-sm">TZS {fmt(wallet?.frozen_balance ?? "0")}</p>
+        {parseFloat(wallet?.frozen_balance ?? "0") > 0 && (
+          <div className="bg-white/10 rounded-xl p-3 mb-4 inline-flex flex-col">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Lock className="w-3 h-3 text-blue-200" />
+              <span className="text-blue-200 text-xs">In Escrow</span>
             </div>
-          )}
+            <p className="text-white font-bold text-sm">TZS {fmt(wallet?.frozen_balance ?? "0")}</p>
+          </div>
+        )}
+        <div className="flex gap-3">
+          <Link href="/app/deposit" className="flex-1 h-11 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors">
+            <ArrowDownLeft className="w-4 h-4" /> Deposit
+          </Link>
+          <Link href="/app/withdraw" className="flex-1 h-11 bg-white/10 hover:bg-white/20 border border-white/25 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors">
+            <ArrowUpRight className="w-4 h-4" /> Withdraw
+          </Link>
         </div>
       </div>
 

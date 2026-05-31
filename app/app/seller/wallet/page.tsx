@@ -74,6 +74,14 @@ export default function SellerWallet() {
             <p className="text-white font-bold text-sm">TZS {fmt(wallet?.pending_balance ?? "0")}</p>
           </div>
         </div>
+        <div className="flex gap-3 mt-4">
+          <Link href="/app/deposit" className="flex-1 h-11 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors">
+            <ArrowDownLeft className="w-4 h-4" /> Deposit
+          </Link>
+          <Link href="/app/withdraw" className="flex-1 h-11 bg-white/10 hover:bg-white/20 border border-white/25 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors">
+            <ArrowUpRight className="w-4 h-4" /> Withdraw
+          </Link>
+        </div>
       </div>
 
       {user?.referral_code && (
