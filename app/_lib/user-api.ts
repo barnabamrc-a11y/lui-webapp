@@ -37,17 +37,62 @@ export function getStoredUser<T>(): T | null {
   try { return JSON.parse(raw) as T; } catch { return null; }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = getToken();
+// Single shared refresh so parallel 401s don't each trigger a refresh.
+let refreshing: Promise<string | null> | null = null;
+
+async function refreshAccessToken(): Promise<string | null> {
+  if (refreshing) return refreshing;
+  refreshing = (async () => {
+    const refreshToken = typeof window !== "undefined" ? localStorage.getItem(REFRESH_KEY) : null;
+    if (!refreshToken) return null;
+    try {
+      const res = await fetch(`${BASE}/api/v1/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshToken }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.data?.accessToken) return null;
+      localStorage.setItem(TOKEN_KEY, json.data.accessToken);
+      if (json.data.refreshToken) localStorage.setItem(REFRESH_KEY, json.data.refreshToken);
+      return json.data.accessToken as string;
+    } catch {
+      return null;
+    }
+  })();
+  const result = await refreshing;
+  refreshing = null;
+  return result;
+}
+
+async function doFetch(path: string, init: RequestInit, token: string | null): Promise<Response> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(init.headers as Record<string, string>),
   };
   if (token) headers["Authorization"] = `Bearer ${token}`;
+  return fetch(`${BASE}${path}`, { ...init, headers });
+}
 
-  const res = await fetch(`${BASE}${path}`, { ...init, headers });
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  let res = await doFetch(path, init, getToken());
+
+  // Access token expired → refresh once and retry.
+  if (res.status === 401) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      res = await doFetch(path, init, newToken);
+    } else {
+      // Refresh failed → session is over. Send the user to login.
+      clearUserTokens();
+      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/auth")) {
+        window.location.href = "/auth/login";
+      }
+      throw new Error("Session expired. Please sign in again.");
+    }
+  }
+
   const json = await res.json();
-
   if (!res.ok) throw new Error(json.message ?? `Request failed: ${res.status}`);
   return json.data as T;
 }
