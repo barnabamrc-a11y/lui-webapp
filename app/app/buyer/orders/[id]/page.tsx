@@ -194,13 +194,25 @@ export default function BuyerOrderDetail({ params }: { params: Promise<{ id: str
         </div>
       )}
 
-      {/* pending → pay */}
-      {st === "pending" && (
-        <button onClick={pay} disabled={acting}
-          className="w-full h-12 bg-[#4361EE] hover:bg-[#3451D1] text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
-          {acting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CreditCard className="w-4 h-4" /> Pay TZS {fmt(order.total)}</>}
-        </button>
-      )}
+      {/* pending → pay (with transparent 2.5% fee) */}
+      {st === "pending" && (() => {
+        const total = parseFloat(order.total);
+        const fee = Math.round(total * 0.025);
+        const pay_total = total + fee;
+        return (
+          <div className="space-y-2">
+            <div className="bg-[#0d1f35] border border-[#1a3060] rounded-2xl p-4 space-y-2">
+              <div className="flex justify-between text-sm"><span className="text-[#8b9ab4]">Order total</span><span className="text-white">TZS {fmt(total)}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-[#8b9ab4]">LUI fee (2.5%)</span><span className="text-white">TZS {fmt(fee)}</span></div>
+              <div className="border-t border-[#1a3060] pt-2 flex justify-between"><span className="text-white font-semibold">You pay</span><span className="text-[#4f8eff] font-bold">TZS {fmt(pay_total)}</span></div>
+            </div>
+            <button onClick={pay} disabled={acting}
+              className="w-full h-12 bg-[#4361EE] hover:bg-[#3451D1] text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
+              {acting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CreditCard className="w-4 h-4" /> Pay TZS {fmt(pay_total)}</>}
+            </button>
+          </div>
+        );
+      })()}
 
       {/* delivered → release / dispute */}
       {st === "delivered" && (

@@ -38,6 +38,11 @@ export default function CreateOrder() {
   const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
 
+  // Amount fields: store digits only, display with thousands separators.
+  const updateNum = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [k]: e.target.value.replace(/[^\d]/g, "") }));
+  const commas = (v: string) => (v ? Number(v.replace(/[^\d]/g, "")).toLocaleString("en-US") : "");
+
   const total = (parseFloat(form.price || "0") * parseInt(form.quantity || "1")) + parseFloat(form.deliveryFee || "0");
 
   // ── Buyer phone lookup (debounced) ──────────────────────────
@@ -215,7 +220,7 @@ export default function CreateOrder() {
 
         <div className="grid grid-cols-2 gap-3">
           <Field label="Price (TZS) *" icon={<DollarSign className="w-4 h-4" />}>
-            <input type="number" min="0" step="100" value={form.price} onChange={update("price")} placeholder="500000" required className="app-input" />
+            <input type="text" inputMode="numeric" value={commas(form.price)} onChange={updateNum("price")} placeholder="500,000" required className="app-input" />
           </Field>
           <Field label="Quantity" icon={<Hash className="w-4 h-4" />}>
             <input type="number" min="1" value={form.quantity} onChange={update("quantity")} required className="app-input" />
@@ -223,7 +228,7 @@ export default function CreateOrder() {
         </div>
 
         <Field label="Delivery Fee (TZS)" icon={<Truck className="w-4 h-4" />}>
-          <input type="number" min="0" step="100" value={form.deliveryFee} onChange={update("deliveryFee")} placeholder="0" className="app-input" />
+          <input type="text" inputMode="numeric" value={commas(form.deliveryFee)} onChange={updateNum("deliveryFee")} placeholder="0" className="app-input" />
         </Field>
 
         {parseFloat(form.price || "0") > 0 && (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { Loader2, ArrowUpRight, ArrowDownLeft, Lock, Share2 } from "lucide-react";
 import { userApi, getStoredUser } from "@/app/_lib/user-api";
 import { connectSocket } from "@/app/_lib/socket";
@@ -95,8 +96,8 @@ export default function BuyerWallet() {
         ) : (
           <div className="space-y-2">
             {txs.map((tx) => (
-              <div key={tx.id}
-                className="bg-[#0d1f35] border border-[#1a3060] rounded-xl p-4 flex items-center gap-3">
+              <Link key={tx.id} href={`/app/transaction/${tx.id}`}
+                className="bg-[#0d1f35] border border-[#1a3060] rounded-xl p-4 flex items-center gap-3 hover:border-[#4361EE]/40 transition-colors">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${
                   tx.direction === "credit" ? "bg-emerald-500/10" : "bg-red-500/10"
                 }`}>
@@ -114,7 +115,7 @@ export default function BuyerWallet() {
                 <p className={`text-sm font-bold flex-shrink-0 ${tx.direction === "credit" ? "text-emerald-400" : "text-red-400"}`}>
                   {tx.direction === "credit" ? "+" : "-"}TZS {fmt(tx.amount)}
                 </p>
-              </div>
+              </Link>
             ))}
           </div>
         )}
