@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Phone, LogOut, ChevronRight, ArrowLeftRight, Loader2, Store, Pencil, Check, X } from "lucide-react";
+import { User, Mail, Phone, LogOut, ChevronRight, ArrowLeftRight, Loader2, Store, Pencil, Check, X, Globe } from "lucide-react";
 import { getStoredUser, clearUserTokens, userApi, updateStoredUser } from "@/app/_lib/user-api";
+import { LangSwitch } from "@/app/_components/lang-switch";
 
 function formatTzPhone(raw: string): string {
   const p = raw.replace(/[^\d]/g, "");
@@ -133,6 +134,15 @@ export default function BuyerProfile() {
             </div>
           </div>
         )}
+      </div>
+
+      {/* Language */}
+      <div className="bg-[#0d1f35] border border-[#1a3060] rounded-2xl p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-[#4361EE]/15 flex items-center justify-center"><Globe className="w-4 h-4 text-[#4f8eff]" /></div>
+          <span className="text-white text-sm font-medium">Language</span>
+        </div>
+        <LangSwitch dark />
       </div>
 
       {/* Switch role */}
