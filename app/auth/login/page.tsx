@@ -55,6 +55,7 @@ export default function LoginPage() {
         // Use the canonical email the server stored the OTP against (not what the user typed)
         if (res.email) setEmail(res.email);
         setStep("otp");
+        setLoading(false); // re-enable the verify button on the OTP step
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
