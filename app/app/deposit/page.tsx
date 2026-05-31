@@ -211,7 +211,7 @@ export default function DepositPage() {
             </div>
           </Field>
           <Field label="BANK ACCOUNT NUMBER">
-            <input value={bankAcct} onChange={(e) => setBankAcct(e.target.value.replace(/[^\d]/g, ""))} placeholder="0123456789" inputMode="numeric" className="w-full h-11 px-4 rounded-xl bg-[#07101e] border border-[#1a3060] text-white text-sm focus:outline-none focus:border-[#4361EE]" />
+            <input value={bankAcct} onChange={(e) => setBankAcct(e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase())} placeholder="0123ABC456" autoCapitalize="characters" className="w-full h-11 px-4 rounded-xl bg-[#07101e] border border-[#1a3060] text-white text-sm focus:outline-none focus:border-[#4361EE]" />
           </Field>
           <div className="flex items-start gap-2 bg-[#0d1f35] border border-[#4361EE]/30 rounded-xl p-3">
             <Info className="w-4 h-4 text-[#4f8eff] flex-shrink-0 mt-0.5" />

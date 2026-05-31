@@ -7,17 +7,19 @@ import { useEffect, useState } from "react";
 import { Home, ShoppingBag, Wallet, User, Bell } from "lucide-react";
 import { getStoredUser } from "@/app/_lib/user-api";
 import { NotifProvider, useNotifs } from "@/app/app/_lib/notif-context";
+import { useI18n, type TKey } from "@/app/_lib/i18n";
 
-const NAV = [
-  { href: "/app/buyer",         icon: Home,        label: "Home"   },
-  { href: "/app/buyer/orders",  icon: ShoppingBag, label: "Orders" },
-  { href: "/app/buyer/wallet",  icon: Wallet,      label: "Wallet" },
-  { href: "/app/buyer/profile", icon: User,        label: "Profile"},
+const NAV: { href: string; icon: typeof Home; key: TKey }[] = [
+  { href: "/app/buyer",         icon: Home,        key: "home"    },
+  { href: "/app/buyer/orders",  icon: ShoppingBag, key: "orders"  },
+  { href: "/app/buyer/wallet",  icon: Wallet,      key: "wallet"  },
+  { href: "/app/buyer/profile", icon: User,        key: "profile" },
 ];
 
 function BuyerShell({ children }: { children: React.ReactNode }) {
   const pathname  = usePathname();
   const { unread } = useNotifs();
+  const { t } = useI18n();
   const [user, setUser] = useState<{ name: string } | null>(null);
 
   useEffect(() => {
@@ -38,7 +40,7 @@ function BuyerShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 p-4 space-y-1">
-          {NAV.map(({ href, icon: Icon, label }) => {
+          {NAV.map(({ href, icon: Icon, key }) => {
             const active = href === "/app/buyer" ? pathname === href : pathname.startsWith(href);
             return (
               <Link key={href} href={href}
@@ -46,7 +48,7 @@ function BuyerShell({ children }: { children: React.ReactNode }) {
                   active ? "bg-[#4361EE] text-white" : "text-[#8b9ab4] hover:bg-[#0d1f35] hover:text-white"
                 }`}>
                 <Icon className="w-4 h-4" />
-                {label}
+                {t(key)}
               </Link>
             );
           })}
@@ -88,7 +90,7 @@ function BuyerShell({ children }: { children: React.ReactNode }) {
 
       {/* ── Bottom tab bar (mobile) ────────────────── */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#07101e] border-t border-[#1a3060] flex">
-        {NAV.map(({ href, icon: Icon, label }) => {
+        {NAV.map(({ href, icon: Icon, key }) => {
           const active = href === "/app/buyer" ? pathname === href : pathname.startsWith(href);
           return (
             <Link key={href} href={href}
@@ -96,7 +98,7 @@ function BuyerShell({ children }: { children: React.ReactNode }) {
                 active ? "text-[#4361EE]" : "text-[#8b9ab4]"
               }`}>
               <Icon className="w-5 h-5" />
-              <span>{label}</span>
+              <span>{t(key)}</span>
             </Link>
           );
         })}

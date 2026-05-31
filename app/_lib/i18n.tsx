@@ -49,6 +49,76 @@ const en = {
   switchToSeller:"Switch to Seller",
   signOut:      "Sign Out",
   language:     "Language",
+
+  // Greetings / home
+  hi:               "Hi",
+  accountOverview:  "Here's your account overview",
+  sellerDashboard:  "Your seller dashboard",
+  availableBalance: "Available Balance",
+  inEscrow:         "In Escrow",
+  pending:          "Pending",
+  viewWallet:       "View Wallet",
+  myOrders:         "My Orders",
+  total:            "Total",
+  active:           "Active",
+  completed:        "Completed",
+  recentOrders:     "Recent Orders",
+  noOrdersYet:      "No orders yet",
+  makeFirstPayment: "Make your first payment",
+  createFirstOrder: "Create your first transaction",
+  review:           "Review",
+  awaitingBuyer:    "awaiting buyer",
+  enterCodeToPay:   "Enter order number to pay",
+
+  // Orders list
+  all:        "All",
+  disputed:   "Disputed",
+  noOrdersFound: "No orders found",
+
+  // Wallet
+  transactionHistory: "Transaction History",
+  noTransactions:     "No transactions yet",
+  deposit:            "Deposit",
+  withdraw:           "Withdraw",
+  yourReferralCode:   "Your Referral Code",
+
+  // Deposit
+  depositCash:     "Deposit Cash",
+  mobileMoney:     "Mobile Money",
+  bank:            "Bank",
+  amountToReceive: "Amount to receive (TZS)",
+  walletCredit:    "Wallet credit",
+  luiFee:          "LUI fee (2.5%)",
+  totalToPay:      "Total to pay",
+  operator:        "Operator",
+  mobileMoneyNumber:"Mobile money number",
+  bankAccountNumber:"Bank account number",
+  otpFromBank:     "OTP from bank USSD",
+
+  // Withdraw
+  recipientNumber: "Recipient number",
+  verifyingRecipient: "Verifying recipient…",
+
+  // Order detail / pay
+  orderTotal:      "Order total",
+  youPay:          "You pay",
+  trackOrder:      "Track Order",
+  chatWithSeller:  "Chat with Seller",
+  chatWithBuyer:   "Chat with Buyer",
+  releasePayment:  "Release Payment",
+  markPreparing:   "Mark as Preparing",
+  markDispatched:  "Mark as Dispatched",
+  deliveryAddress: "Delivery Address",
+
+  // Common
+  cancel:   "Cancel",
+  save:     "Save",
+  done:     "Done",
+  back:     "Back",
+  email:    "Email",
+  phone:    "Phone",
+  notifications: "Notifications",
+  markAllRead:   "Mark all read",
 };
 
 const sw: typeof en = {
@@ -91,6 +161,69 @@ const sw: typeof en = {
   switchToSeller:"Badilisha kwenda Muuzaji",
   signOut:      "Toka",
   language:     "Lugha",
+
+  hi:               "Habari",
+  accountOverview:  "Muhtasari wa akaunti yako",
+  sellerDashboard:  "Dashibodi yako ya muuzaji",
+  availableBalance: "Salio Lililopo",
+  inEscrow:         "Kwenye Amana",
+  pending:          "Inasubiri",
+  viewWallet:       "Ona Mkoba",
+  myOrders:         "Maagizo Yangu",
+  total:            "Jumla",
+  active:           "Yanayoendelea",
+  completed:        "Yaliyokamilika",
+  recentOrders:     "Maagizo ya Karibuni",
+  noOrdersYet:      "Hakuna maagizo bado",
+  makeFirstPayment: "Fanya malipo yako ya kwanza",
+  createFirstOrder: "Unda muamala wako wa kwanza",
+  review:           "Kagua",
+  awaitingBuyer:    "inasubiri mnunuzi",
+  enterCodeToPay:   "Weka nambari ya oda kulipa",
+
+  all:        "Yote",
+  disputed:   "Yenye Mgogoro",
+  noOrdersFound: "Hakuna maagizo yaliyopatikana",
+
+  transactionHistory: "Historia ya Miamala",
+  noTransactions:     "Hakuna miamala bado",
+  deposit:            "Weka Pesa",
+  withdraw:           "Toa Pesa",
+  yourReferralCode:   "Nambari yako ya Rufaa",
+
+  depositCash:     "Weka Pesa",
+  mobileMoney:     "Pesa za Simu",
+  bank:            "Benki",
+  amountToReceive: "Kiasi cha kupokea (TZS)",
+  walletCredit:    "Salio la mkoba",
+  luiFee:          "Ada ya LUI (2.5%)",
+  totalToPay:      "Jumla ya kulipa",
+  operator:        "Mtoa huduma",
+  mobileMoneyNumber:"Nambari ya pesa za simu",
+  bankAccountNumber:"Nambari ya akaunti ya benki",
+  otpFromBank:     "OTP kutoka USSD ya benki",
+
+  recipientNumber: "Nambari ya mpokeaji",
+  verifyingRecipient: "Inathibitisha mpokeaji…",
+
+  orderTotal:      "Jumla ya oda",
+  youPay:          "Unalipa",
+  trackOrder:      "Fuatilia Oda",
+  chatWithSeller:  "Ongea na Muuzaji",
+  chatWithBuyer:   "Ongea na Mnunuzi",
+  releasePayment:  "Toa Malipo",
+  markPreparing:   "Weka kama Inaandaliwa",
+  markDispatched:  "Weka kama Imetumwa",
+  deliveryAddress: "Anwani ya Utoaji",
+
+  cancel:   "Ghairi",
+  save:     "Hifadhi",
+  done:     "Imekamilika",
+  back:     "Rudi",
+  email:    "Barua pepe",
+  phone:    "Simu",
+  notifications: "Arifa",
+  markAllRead:   "Soma zote",
 };
 
 const dict: Record<Locale, typeof en> = { en, sw };

@@ -6,6 +6,7 @@ import { ShoppingBag, Wallet, ArrowRight, Loader2, Plus, TrendingUp, Lock, Clock
 import { userApi, getStoredUser } from "@/app/_lib/user-api";
 import { fmt } from "@/app/app/_lib/fmt";
 import { connectSocket } from "@/app/_lib/socket";
+import { useI18n } from "@/app/_lib/i18n";
 
 interface WalletData { available_balance: string; frozen_balance: string; pending_balance: string; }
 interface Order { id: string; order_number: string; product: string; total: string; status: string; created_at: string; buyer_name: string | null; }
@@ -25,6 +26,7 @@ export default function SellerHome() {
   const [orders,   setOrders]   = useState<Order[]>([]);
   const [loading,  setLoading]  = useState(true);
   const user = getStoredUser<{ name: string }>();
+  const { t } = useI18n();
   const firstName = user?.name?.split(" ")[0] ?? "there";
 
   const load = useCallback(async () => {
@@ -61,38 +63,38 @@ export default function SellerHome() {
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Hi, {firstName} 👋</h1>
-          <p className="text-[#8b9ab4] text-sm mt-1">Your seller dashboard</p>
+          <h1 className="text-2xl font-bold text-white">{t("hi")}, {firstName} 👋</h1>
+          <p className="text-[#8b9ab4] text-sm mt-1">{t("sellerDashboard")}</p>
         </div>
         <Link href="/app/seller/create-order"
           className="flex items-center gap-2 px-4 py-2 bg-[#4361EE] hover:bg-[#3451D1] text-white text-sm font-semibold rounded-xl transition-colors">
-          <Plus className="w-4 h-4" /> New Order
+          <Plus className="w-4 h-4" /> {t("newOrder")}
         </Link>
       </div>
 
       {/* Wallet card */}
       <div className="bg-gradient-to-br from-[#4361EE] to-[#3451D1] rounded-2xl p-6 shadow-lg">
-        <p className="text-blue-200 text-sm font-medium mb-1">Available Balance</p>
+        <p className="text-blue-200 text-sm font-medium mb-1">{t("availableBalance")}</p>
         <p className="text-3xl font-bold text-white mb-4">TZS {fmt(wallet?.available_balance ?? "0")}</p>
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="bg-white/10 rounded-xl p-3">
             <div className="flex items-center gap-1.5 mb-1">
               <Lock className="w-3 h-3 text-blue-200" />
-              <span className="text-blue-200 text-xs">In Escrow</span>
+              <span className="text-blue-200 text-xs">{t("inEscrow")}</span>
             </div>
             <p className="text-white font-bold text-sm">TZS {fmt(wallet?.frozen_balance ?? "0")}</p>
           </div>
           <div className="bg-white/10 rounded-xl p-3">
             <div className="flex items-center gap-1.5 mb-1">
               <Clock className="w-3 h-3 text-blue-200" />
-              <span className="text-blue-200 text-xs">Pending</span>
+              <span className="text-blue-200 text-xs">{t("pending")}</span>
             </div>
             <p className="text-white font-bold text-sm">TZS {fmt(wallet?.pending_balance ?? "0")}</p>
           </div>
         </div>
         <Link href="/app/seller/wallet"
           className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-          <Wallet className="w-4 h-4" /> View Wallet <ArrowRight className="w-3 h-3" />
+          <Wallet className="w-4 h-4" /> {t("viewWallet")} <ArrowRight className="w-3 h-3" />
         </Link>
       </div>
 
@@ -101,25 +103,25 @@ export default function SellerHome() {
         <div className="bg-[#0d1f35] border border-[#1a3060] rounded-2xl p-4">
           <ShoppingBag className="w-5 h-5 text-[#4f8eff] mb-2" />
           <p className="text-2xl font-bold text-white">{active}</p>
-          <p className="text-[#8b9ab4] text-xs">Active Orders</p>
+          <p className="text-[#8b9ab4] text-xs">{t("activeOrders")}</p>
         </div>
         <div className="bg-[#0d1f35] border border-[#1a3060] rounded-2xl p-4">
           <TrendingUp className="w-5 h-5 text-emerald-400 mb-2" />
           <p className="text-2xl font-bold text-white">{completed}</p>
-          <p className="text-[#8b9ab4] text-xs">Completed</p>
+          <p className="text-[#8b9ab4] text-xs">{t("completed")}</p>
         </div>
       </div>
 
       {/* Recent orders */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-white font-semibold">Recent Orders</h2>
-          <Link href="/app/seller/orders" className="text-[#4f8eff] text-sm hover:underline">See all</Link>
+          <h2 className="text-white font-semibold">{t("recentOrders")}</h2>
+          <Link href="/app/seller/orders" className="text-[#4f8eff] text-sm hover:underline">{t("seeAll")}</Link>
         </div>
         {orders.length === 0 ? (
           <div className="bg-[#0d1f35] border border-[#1a3060] rounded-2xl p-8 text-center">
             <ShoppingBag className="w-8 h-8 text-[#4f8eff] mx-auto mb-2 opacity-50" />
-            <p className="text-[#8b9ab4] text-sm">No orders yet</p>
+            <p className="text-[#8b9ab4] text-sm">{t("noOrdersYet")}</p>
             <Link href="/app/seller/create-order" className="text-[#4f8eff] text-sm hover:underline mt-1 inline-block">
               Create your first order
             </Link>

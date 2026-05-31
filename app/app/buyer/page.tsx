@@ -6,6 +6,7 @@ import { ShoppingBag, Wallet, ArrowRight, Loader2, TrendingUp, Clock } from "luc
 import { userApi, getStoredUser } from "@/app/_lib/user-api";
 import { fmt } from "@/app/app/_lib/fmt";
 import { connectSocket } from "@/app/_lib/socket";
+import { useI18n } from "@/app/_lib/i18n";
 
 interface WalletData { available_balance: string; frozen_balance: string; pending_balance: string; }
 interface Order { id: string; order_number: string; product: string; total: string; status: string; created_at: string; seller_name: string; }
@@ -26,6 +27,7 @@ export default function BuyerHome() {
   const [orders, setOrders]   = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const user = getStoredUser<{ name: string }>();
+  const { t } = useI18n();
 
   const load = useCallback(async () => {
     try {
@@ -63,13 +65,13 @@ export default function BuyerHome() {
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Hi, {firstName} 👋</h1>
-        <p className="text-[#8b9ab4] text-sm mt-1">Here&apos;s your account overview</p>
+        <h1 className="text-2xl font-bold text-white">{t("hi")}, {firstName} 👋</h1>
+        <p className="text-[#8b9ab4] text-sm mt-1">{t("accountOverview")}</p>
       </div>
 
       {/* Wallet card */}
       <div className="bg-gradient-to-br from-[#4361EE] to-[#3451D1] rounded-2xl p-6 shadow-lg">
-        <p className="text-blue-200 text-sm font-medium mb-1">Available Balance</p>
+        <p className="text-blue-200 text-sm font-medium mb-1">{t("availableBalance")}</p>
         <p className="text-3xl font-bold text-white mb-4">
           TZS {fmt(wallet?.available_balance ?? "0")}
         </p>
@@ -80,7 +82,7 @@ export default function BuyerHome() {
         )}
         <Link href="/app/buyer/wallet"
           className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-          <Wallet className="w-4 h-4" /> View Wallet <ArrowRight className="w-3 h-3" />
+          <Wallet className="w-4 h-4" /> {t("viewWallet")} <ArrowRight className="w-3 h-3" />
         </Link>
       </div>
 
@@ -92,8 +94,8 @@ export default function BuyerHome() {
             <TrendingUp className="w-5 h-5 text-[#4f8eff]" />
           </div>
           <div>
-            <p className="text-white font-semibold text-sm">Pay via Link</p>
-            <p className="text-[#8b9ab4] text-xs mt-0.5">Enter order number to pay</p>
+            <p className="text-white font-semibold text-sm">{t("payViaCode")}</p>
+            <p className="text-[#8b9ab4] text-xs mt-0.5">{t("enterCodeToPay")}</p>
           </div>
         </Link>
         <Link href="/app/buyer/orders"
@@ -102,7 +104,7 @@ export default function BuyerHome() {
             <ShoppingBag className="w-5 h-5 text-[#4f8eff]" />
           </div>
           <div>
-            <p className="text-white font-semibold text-sm">My Orders</p>
+            <p className="text-white font-semibold text-sm">{t("myOrders")}</p>
             <p className="text-[#8b9ab4] text-xs mt-0.5">{orders.length} recent orders</p>
           </div>
         </Link>
@@ -113,7 +115,7 @@ export default function BuyerHome() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <span className="w-2 h-2 rounded-full bg-[#4361EE]" />
-            <h2 className="text-white font-semibold">Pending for You</h2>
+            <h2 className="text-white font-semibold">{t("pendingForYou")}</h2>
             <span className="text-xs bg-[#4361EE]/20 text-[#4f8eff] px-2 py-0.5 rounded-full font-bold">{pendingForYou.length}</span>
           </div>
           <div className="space-y-2">
@@ -140,14 +142,14 @@ export default function BuyerHome() {
       {/* Recent orders */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-white font-semibold">Recent Orders</h2>
-          <Link href="/app/buyer/orders" className="text-[#4f8eff] text-sm hover:underline">See all</Link>
+          <h2 className="text-white font-semibold">{t("recentOrders")}</h2>
+          <Link href="/app/buyer/orders" className="text-[#4f8eff] text-sm hover:underline">{t("seeAll")}</Link>
         </div>
 
         {others.length === 0 ? (
           <div className="bg-[#0d1f35] border border-[#1a3060] rounded-2xl p-8 text-center">
             <Clock className="w-8 h-8 text-[#4f8eff] mx-auto mb-2 opacity-50" />
-            <p className="text-[#8b9ab4] text-sm">No orders yet</p>
+            <p className="text-[#8b9ab4] text-sm">{t("noOrdersYet")}</p>
             <Link href="/app/buyer/pay" className="text-[#4f8eff] text-sm hover:underline mt-1 inline-block">
               Make your first payment
             </Link>
