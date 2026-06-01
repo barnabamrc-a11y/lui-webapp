@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Loader2, ChevronRight } from "lucide-react";
 import { userApi } from "@/app/_lib/user-api";
-import { fmt, fmtDate } from "@/app/app/_lib/fmt";
+import { fmt, fmtDate, amountColor } from "@/app/app/_lib/fmt";
+import { connectSocket } from "@/app/_lib/socket";
 
 interface Order {
   id: string; order_number: string; product: string; total: string;
@@ -29,13 +30,24 @@ export default function BuyerOrders() {
   const [orders, setOrders]   = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     setLoading(true);
     const q = filter === "all" ? "" : `&status=${filter}`;
     userApi.get<{ data: Order[] }>(`/api/v1/orders?limit=50${q}`)
       .then((r) => setOrders(r.data))
       .finally(() => setLoading(false));
   }, [filter]);
+
+  useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    const sock = connectSocket();
+    if (!sock) return;
+    const onUpd = () => load();
+    sock.on("order:updated", onUpd);
+    sock.on("notification:new", onUpd);
+    return () => { sock.off("order:updated", onUpd); sock.off("notification:new", onUpd); };
+  }, [load]);
 
   return (
     <div className="max-w-2xl mx-auto space-y-5">
@@ -78,7 +90,7 @@ export default function BuyerOrders() {
                 <p className="text-[#8b9ab4] text-xs">{fmtDate(o.created_at)}</p>
               </div>
               <div className="text-right flex-shrink-0 space-y-1">
-                <p className="text-white text-sm font-bold">TZS {fmt(o.total)}</p>
+                <p className="text-sm font-bold" style={{ color: amountColor(o.status, "#fff") }}>TZS {fmt(o.total)}</p>
                 <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium border ${STATUS_COLORS[o.status] ?? "bg-slate-500/20 text-slate-400 border-slate-500/30"}`}>
                   {o.status.replace(/_/g, " ")}
                 </span>

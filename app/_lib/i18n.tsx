@@ -42,6 +42,9 @@ const en = {
   buyerFound:   "Buyer found",
   productName:  "Product Name",
   addPhoto:     "Click to add product photo",
+  completeBusinessTitle: "Complete your business info",
+  completeBusinessBody:  "Before you can create orders, please add your business name and location so buyers know who they are dealing with.",
+  completeBusinessCta:   "Add Business Info",
 
   // Profile
   switchRole:   "Switch Role",
@@ -155,6 +158,9 @@ const sw: typeof en = {
   buyerFound:   "Mnunuzi amepatikana",
   productName:  "Jina la Bidhaa",
   addPhoto:     "Bofya kuongeza picha ya bidhaa",
+  completeBusinessTitle: "Kamilisha taarifa za biashara",
+  completeBusinessBody:  "Kabla ya kuunda oda, tafadhali ongeza jina na eneo la biashara yako ili wanunuzi wajue wanashughulika na nani.",
+  completeBusinessCta:   "Ongeza Taarifa za Biashara",
 
   switchRole:   "Badilisha Jukumu",
   switchToBuyer:"Badilisha kwenda Mnunuzi",

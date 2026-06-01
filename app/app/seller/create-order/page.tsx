@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Package, DollarSign, Hash, Truck, Phone, Copy, Loader2, ArrowLeft, Camera, X, CheckCircle2 } from "lucide-react";
+import { Package, DollarSign, Hash, Truck, Phone, Copy, Loader2, ArrowLeft, Camera, X, CheckCircle2, Building2, ArrowRight } from "lucide-react";
 import { userApi } from "@/app/_lib/user-api";
 import { fmt } from "@/app/app/_lib/fmt";
 import { useI18n } from "@/app/_lib/i18n";
@@ -34,6 +34,19 @@ export default function CreateOrder() {
 
   const fileRef = useRef<HTMLInputElement>(null);
   const phoneTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── Business-info gate ──────────────────────────────────────
+  const [bizChecking, setBizChecking] = useState(true);
+  const [bizComplete, setBizComplete] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    userApi.get<{ business_name: string | null; business_location: string | null }>("/api/v1/users/me/seller-profile")
+      .then((p) => { if (alive) setBizComplete(!!(p?.business_name?.trim() && p?.business_location?.trim())); })
+      .catch(() => { if (alive) setBizComplete(false); })
+      .finally(() => { if (alive) setBizChecking(false); });
+    return () => { alive = false; };
+  }, []);
 
   const update = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -116,6 +129,20 @@ export default function CreateOrder() {
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
+
+  if (!bizChecking && !bizComplete) return (
+    <div className="max-w-md mx-auto pt-10 text-center space-y-4">
+      <div className="w-20 h-20 bg-[#4361EE]/15 rounded-full flex items-center justify-center mx-auto">
+        <Building2 className="w-9 h-9 text-[#4f8eff]" />
+      </div>
+      <h2 className="text-white text-xl font-bold">{t("completeBusinessTitle")}</h2>
+      <p className="text-[#8b9ab4] text-sm leading-relaxed px-4">{t("completeBusinessBody")}</p>
+      <button onClick={() => router.push("/app/seller/profile")}
+        className="inline-flex items-center gap-2 px-5 py-3 bg-[#4361EE] hover:bg-[#3451D1] text-white font-semibold rounded-xl transition-colors mt-2">
+        {t("completeBusinessCta")} <ArrowRight className="w-4 h-4" />
+      </button>
+    </div>
+  );
 
   if (created) return (
     <div className="max-w-sm mx-auto space-y-6 pt-4">

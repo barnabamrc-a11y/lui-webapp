@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Wallet, ArrowRight, Loader2, TrendingUp, Clock } from "lucide-react";
 import { userApi, getStoredUser } from "@/app/_lib/user-api";
-import { fmt } from "@/app/app/_lib/fmt";
+import { fmt, amountColor } from "@/app/app/_lib/fmt";
 import { connectSocket } from "@/app/_lib/socket";
 import { useI18n } from "@/app/_lib/i18n";
 
@@ -75,9 +75,14 @@ export default function BuyerHome() {
         <p className="text-3xl font-bold text-white mb-4">
           TZS {fmt(wallet?.available_balance ?? "0")}
         </p>
+        {parseFloat(wallet?.pending_balance ?? "0") > 0 && (
+          <p className="text-blue-200 text-xs mb-1">
+            + TZS {fmt(wallet?.pending_balance ?? "0")} in escrow
+          </p>
+        )}
         {parseFloat(wallet?.frozen_balance ?? "0") > 0 && (
-          <p className="text-blue-200 text-xs mb-4">
-            + TZS {fmt(wallet?.frozen_balance ?? "0")} in escrow
+          <p className="text-red-200 text-xs mb-4">
+            TZS {fmt(wallet?.frozen_balance ?? "0")} disputed
           </p>
         )}
         <Link href="/app/buyer/wallet"
@@ -130,7 +135,7 @@ export default function BuyerHome() {
                   <p className="text-[#8b9ab4] text-xs">From {o.seller_name}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-white text-sm font-semibold">TZS {fmt(o.total)}</p>
+                  <p className="text-sm font-semibold" style={{ color: amountColor(o.status, "#fff") }}>TZS {fmt(o.total)}</p>
                   <span className="text-[#4f8eff] text-xs font-bold">Review →</span>
                 </div>
               </Link>
@@ -167,7 +172,7 @@ export default function BuyerHome() {
                   <p className="text-[#8b9ab4] text-xs">{o.order_number} · {o.seller_name}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-white text-sm font-semibold">TZS {fmt(o.total)}</p>
+                  <p className="text-sm font-semibold" style={{ color: amountColor(o.status, "#fff") }}>TZS {fmt(o.total)}</p>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[o.status] ?? "bg-slate-500/20 text-slate-400"}`}>
                     {o.status.replace(/_/g, " ")}
                   </span>

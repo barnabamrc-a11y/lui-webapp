@@ -8,3 +8,12 @@ export function fmt(value: string | number): string {
 export function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-TZ", { day: "2-digit", month: "short", year: "numeric" });
 }
+
+/** Colour for an order amount based on its escrow state.
+ *  paid / in-escrow → light blue, completed/released → green, disputed → red. */
+export function amountColor(status: string, fallback = "inherit"): string {
+  if (["paid", "ready_to_ship", "in_transit", "delivered"].includes(status)) return "#4f8eff";
+  if (status === "completed") return "#22c55e";
+  if (status === "disputed") return "#ef4444";
+  return fallback;
+}

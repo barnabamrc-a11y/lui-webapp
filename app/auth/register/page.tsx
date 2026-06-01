@@ -68,7 +68,7 @@ export default function RegisterPage() {
         purpose: "verify_phone",
       });
       saveUserTokens(res.accessToken, res.refreshToken, res.user);
-      window.location.href = role === "seller" ? "/app/seller" : "/app/buyer";
+      window.location.replace(role === "seller" ? "/app/seller" : "/app/buyer");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Verification failed");
       setLoading(false);

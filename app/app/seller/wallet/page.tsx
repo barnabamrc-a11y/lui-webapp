@@ -61,17 +61,17 @@ export default function SellerWallet() {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-white/10 rounded-xl p-3">
             <div className="flex items-center gap-1.5 mb-1">
-              <Lock className="w-3 h-3 text-blue-200" />
+              <Clock className="w-3 h-3 text-blue-200" />
               <span className="text-blue-200 text-xs">In Escrow</span>
             </div>
-            <p className="text-white font-bold text-sm">TZS {fmt(wallet?.frozen_balance ?? "0")}</p>
+            <p className="text-white font-bold text-sm">TZS {fmt(wallet?.pending_balance ?? "0")}</p>
           </div>
           <div className="bg-white/10 rounded-xl p-3">
             <div className="flex items-center gap-1.5 mb-1">
-              <Clock className="w-3 h-3 text-blue-200" />
-              <span className="text-blue-200 text-xs">Pending</span>
+              <Lock className="w-3 h-3 text-red-300" />
+              <span className="text-red-200 text-xs">Disputed</span>
             </div>
-            <p className="text-white font-bold text-sm">TZS {fmt(wallet?.pending_balance ?? "0")}</p>
+            <p className="text-white font-bold text-sm">TZS {fmt(wallet?.frozen_balance ?? "0")}</p>
           </div>
         </div>
         <div className="flex gap-3 mt-4">

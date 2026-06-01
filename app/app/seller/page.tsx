@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Wallet, ArrowRight, Loader2, Plus, TrendingUp, Lock, Clock } from "lucide-react";
 import { userApi, getStoredUser } from "@/app/_lib/user-api";
-import { fmt } from "@/app/app/_lib/fmt";
+import { fmt, amountColor } from "@/app/app/_lib/fmt";
 import { connectSocket } from "@/app/_lib/socket";
 import { useI18n } from "@/app/_lib/i18n";
 
@@ -79,17 +79,17 @@ export default function SellerHome() {
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="bg-white/10 rounded-xl p-3">
             <div className="flex items-center gap-1.5 mb-1">
-              <Lock className="w-3 h-3 text-blue-200" />
+              <Clock className="w-3 h-3 text-blue-200" />
               <span className="text-blue-200 text-xs">{t("inEscrow")}</span>
             </div>
-            <p className="text-white font-bold text-sm">TZS {fmt(wallet?.frozen_balance ?? "0")}</p>
+            <p className="text-white font-bold text-sm">TZS {fmt(wallet?.pending_balance ?? "0")}</p>
           </div>
           <div className="bg-white/10 rounded-xl p-3">
             <div className="flex items-center gap-1.5 mb-1">
-              <Clock className="w-3 h-3 text-blue-200" />
-              <span className="text-blue-200 text-xs">{t("pending")}</span>
+              <Lock className="w-3 h-3 text-red-300" />
+              <span className="text-red-200 text-xs">{t("disputed")}</span>
             </div>
-            <p className="text-white font-bold text-sm">TZS {fmt(wallet?.pending_balance ?? "0")}</p>
+            <p className="text-white font-bold text-sm">TZS {fmt(wallet?.frozen_balance ?? "0")}</p>
           </div>
         </div>
         <Link href="/app/seller/wallet"
@@ -139,7 +139,7 @@ export default function SellerHome() {
                   <p className="text-[#8b9ab4] text-xs">{o.order_number}{o.buyer_name ? ` · ${o.buyer_name}` : " · awaiting buyer"}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-white text-sm font-bold">TZS {fmt(o.total)}</p>
+                  <p className="text-sm font-bold" style={{ color: amountColor(o.status, "#fff") }}>TZS {fmt(o.total)}</p>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[o.status] ?? "bg-slate-500/20 text-slate-400"}`}>
                     {o.status.replace("_", " ")}
                   </span>

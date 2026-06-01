@@ -23,9 +23,10 @@ interface OtpResponse {
 }
 
 function redirectForRole(role: string) {
-  if (role === "admin")        window.location.href = "/dashboard/overview";
-  else if (role === "seller")  window.location.href = "/app/seller";
-  else                         window.location.href = "/app/buyer";
+  // replace() so the login page is dropped from history — back can't return to auth
+  if (role === "admin")        window.location.replace("/dashboard/overview");
+  else if (role === "seller")  window.location.replace("/app/seller");
+  else                         window.location.replace("/app/buyer");
 }
 
 export default function LoginPage() {

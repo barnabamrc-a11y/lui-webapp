@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, ArrowUpRight, ArrowDownLeft, Lock, Share2 } from "lucide-react";
+import { Loader2, ArrowUpRight, ArrowDownLeft, Lock, Clock, Share2 } from "lucide-react";
 import { userApi, getStoredUser } from "@/app/_lib/user-api";
 import { connectSocket } from "@/app/_lib/socket";
 import { fmt, fmtDate } from "@/app/app/_lib/fmt";
@@ -59,15 +59,26 @@ export default function BuyerWallet() {
       <div className="bg-gradient-to-br from-[#4361EE] to-[#3451D1] rounded-2xl p-6">
         <p className="text-blue-200 text-sm mb-1">Available Balance</p>
         <p className="text-3xl font-bold text-white mb-4">TZS {fmt(wallet?.available_balance ?? "0")}</p>
-        {parseFloat(wallet?.frozen_balance ?? "0") > 0 && (
-          <div className="bg-white/10 rounded-xl p-3 mb-4 inline-flex flex-col">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Lock className="w-3 h-3 text-blue-200" />
-              <span className="text-blue-200 text-xs">In Escrow</span>
+        <div className="flex gap-3 mb-4">
+          {parseFloat(wallet?.pending_balance ?? "0") > 0 && (
+            <div className="bg-white/10 rounded-xl p-3 inline-flex flex-col">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Clock className="w-3 h-3 text-blue-200" />
+                <span className="text-blue-200 text-xs">In Escrow</span>
+              </div>
+              <p className="text-white font-bold text-sm">TZS {fmt(wallet?.pending_balance ?? "0")}</p>
             </div>
-            <p className="text-white font-bold text-sm">TZS {fmt(wallet?.frozen_balance ?? "0")}</p>
-          </div>
-        )}
+          )}
+          {parseFloat(wallet?.frozen_balance ?? "0") > 0 && (
+            <div className="bg-white/10 rounded-xl p-3 inline-flex flex-col">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Lock className="w-3 h-3 text-red-300" />
+                <span className="text-red-200 text-xs">Disputed</span>
+              </div>
+              <p className="text-white font-bold text-sm">TZS {fmt(wallet?.frozen_balance ?? "0")}</p>
+            </div>
+          )}
+        </div>
         <div className="flex gap-3">
           <Link href="/app/deposit" className="flex-1 h-11 bg-white/20 hover:bg-white/30 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors">
             <ArrowDownLeft className="w-4 h-4" /> Deposit

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ShoppingBag, Loader2, ChevronRight, Plus } from "lucide-react";
 import { userApi } from "@/app/_lib/user-api";
-import { fmt, fmtDate } from "@/app/app/_lib/fmt";
+import { fmt, fmtDate, amountColor } from "@/app/app/_lib/fmt";
 import { connectSocket } from "@/app/_lib/socket";
 
 interface Order {
@@ -97,7 +97,7 @@ export default function SellerOrders() {
                 <p className="text-[#8b9ab4] text-xs">{fmtDate(o.created_at)}</p>
               </div>
               <div className="text-right flex-shrink-0 space-y-1">
-                <p className="text-white text-sm font-bold">TZS {fmt(o.total)}</p>
+                <p className="text-sm font-bold" style={{ color: amountColor(o.status, "#fff") }}>TZS {fmt(o.total)}</p>
                 <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-medium border ${STATUS_COLORS[o.status] ?? "bg-slate-500/20 text-slate-400 border-slate-500/30"}`}>
                   {o.status.replace(/_/g, " ")}
                 </span>

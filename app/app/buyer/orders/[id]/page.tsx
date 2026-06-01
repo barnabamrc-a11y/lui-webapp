@@ -194,25 +194,67 @@ export default function BuyerOrderDetail({ params }: { params: Promise<{ id: str
         </div>
       )}
 
-      {/* pending → pay (with transparent 2.5% fee) */}
+      {/* pending → pay from wallet (escrow payment is free — fee only on deposit) */}
       {st === "pending" && (() => {
         const total = parseFloat(order.total);
-        const fee = Math.round(total * 0.025);
-        const pay_total = total + fee;
         return (
           <div className="space-y-2">
             <div className="bg-[#0d1f35] border border-[#1a3060] rounded-2xl p-4 space-y-2">
               <div className="flex justify-between text-sm"><span className="text-[#8b9ab4]">Order total</span><span className="text-white">TZS {fmt(total)}</span></div>
-              <div className="flex justify-between text-sm"><span className="text-[#8b9ab4]">LUI fee (2.5%)</span><span className="text-white">TZS {fmt(fee)}</span></div>
-              <div className="border-t border-[#1a3060] pt-2 flex justify-between"><span className="text-white font-semibold">You pay</span><span className="text-[#4f8eff] font-bold">TZS {fmt(pay_total)}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-[#8b9ab4]">Escrow fee</span><span className="text-emerald-400">Free</span></div>
+              <div className="border-t border-[#1a3060] pt-2 flex justify-between"><span className="text-white font-semibold">You pay</span><span className="text-[#4f8eff] font-bold">TZS {fmt(total)}</span></div>
             </div>
             <button onClick={pay} disabled={acting}
               className="w-full h-12 bg-[#4361EE] hover:bg-[#3451D1] text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
-              {acting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CreditCard className="w-4 h-4" /> Pay TZS {fmt(pay_total)}</>}
+              {acting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CreditCard className="w-4 h-4" /> Pay TZS {fmt(total)}</>}
             </button>
           </div>
         );
       })()}
+
+      {/* in_transit → buyer waits for seller to confirm delivery */}
+      {st === "in_transit" && (
+        <div className="flex items-center gap-2 p-3 bg-[#4361EE]/10 border border-[#4361EE]/30 rounded-xl">
+          <Loader2 className="w-4 h-4 text-[#4f8eff] flex-shrink-0" />
+          <span className="text-[#8b9ab4] text-sm">On the way — you&apos;ll be notified when the seller confirms delivery.</span>
+        </div>
+      )}
+
+      {/* completed → success + rate seller */}
+      {st === "completed" && (
+        <div className="space-y-2">
+          <div className="flex items-center gap-3 p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl">
+            <CheckCircle2 className="w-6 h-6 text-emerald-400 flex-shrink-0" />
+            <div>
+              <p className="text-emerald-400 font-semibold">Payment Released Successfully</p>
+              <p className="text-[#8b9ab4] text-sm">TZS {fmt(order.total)} released to {order.seller_business_name ?? order.seller_name}</p>
+            </div>
+          </div>
+          <Link href={`/app/buyer/review/${order.id}`}
+            className="w-full h-11 bg-[#b8890a] hover:bg-[#a07908] text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors">
+            <CheckCircle2 className="w-4 h-4" /> Rate the Seller
+          </Link>
+        </div>
+      )}
+
+      {/* disputed */}
+      {st === "disputed" && (
+        <div className="flex items-center gap-2 p-3 bg-red-500/10 border border-red-500/30 rounded-xl">
+          <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0" />
+          <span className="text-[#8b9ab4] text-sm">Dispute opened — under review by LUI. We&apos;ll notify you of the outcome.</span>
+        </div>
+      )}
+
+      {/* refunded */}
+      {st === "refunded" && (
+        <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl">
+          <XCircle className="w-6 h-6 text-red-400 flex-shrink-0" />
+          <div>
+            <p className="text-red-400 font-semibold">Order Refunded</p>
+            <p className="text-[#8b9ab4] text-sm">TZS {fmt(order.total)} has been refunded to your wallet.</p>
+          </div>
+        </div>
+      )}
 
       {/* delivered → release / dispute */}
       {st === "delivered" && (

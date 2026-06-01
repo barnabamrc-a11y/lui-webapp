@@ -80,7 +80,8 @@ function SellerShell({ children }: { children: React.ReactNode }) {
         {/* Top bar */}
         <div className="sticky top-0 z-20 bg-[#07101e]/80 backdrop-blur border-b border-[#1a3060] px-4 py-3 flex items-center justify-between md:px-6">
           <div className="md:hidden">
-            <Image src="/lui-logo.png" alt="LUI" width={52} height={22} className="object-contain" />
+            <Image src="/lui-logo.png" alt="LUI" width={52} height={22} className="object-contain"
+              style={{ filter: "brightness(0) invert(1)" }} />
           </div>
           <div className="hidden md:block" />
           <div className="flex items-center gap-2">
