@@ -49,8 +49,9 @@ export default function LoginPage() {
       });
 
       if (res.requiresOtp === false && res.accessToken && res.refreshToken && res.user) {
-        // Admin: tokens issued immediately, no OTP needed
-        saveTokens(res.accessToken, res.refreshToken, res.user);
+        // Tokens issued immediately (admins) — store under the correct keys for the role
+        if (res.user.role === "admin") saveTokens(res.accessToken, res.refreshToken, res.user);
+        else saveUserTokens(res.accessToken, res.refreshToken, res.user);
         redirectForRole(res.user.role);
       } else {
         // Use the canonical email the server stored the OTP against (not what the user typed)
