@@ -136,7 +136,7 @@ const sw: typeof en = {
 
   home:        "Nyumbani",
   orders:      "Maagizo",
-  wallet:      "Mkoba",
+  wallet:      "Pochi",
   profile:     "Wasifu",
   newOrder:    "Oda Mpya",
   seeAll:      "Ona yote",
@@ -174,7 +174,7 @@ const sw: typeof en = {
   availableBalance: "Salio Lililopo",
   inEscrow:         "Kwenye Amana",
   pending:          "Inasubiri",
-  viewWallet:       "Ona Mkoba",
+  viewWallet:       "Ona Pochi",
   myOrders:         "Maagizo Yangu",
   total:            "Jumla",
   active:           "Yanayoendelea",
