@@ -16,8 +16,8 @@ interface User {
   email: string;
   phone?: string;
   role: string;
-  status: string;
-  wallet_balance?: number;
+  is_active: boolean;
+  available_balance?: number;
   created_at: string;
 }
 
@@ -99,7 +99,7 @@ export default function UsersPage() {
 
   const handleSuspendToggle = async (u: User) => {
     setSuspending(u.id);
-    const endpoint = u.status?.toLowerCase() === "active"
+    const endpoint = u.is_active
       ? `/api/v1/admin/users/${u.id}/suspend`
       : `/api/v1/admin/users/${u.id}/reinstate`;
     try {
@@ -107,9 +107,7 @@ export default function UsersPage() {
       // Optimistic update
       setUsers((prev) =>
         prev.map((x) =>
-          x.id === u.id
-            ? { ...x, status: x.status?.toLowerCase() === "active" ? "suspended" : "active" }
-            : x
+          x.id === u.id ? { ...x, is_active: !x.is_active } : x
         )
       );
     } catch (e: unknown) {
@@ -191,9 +189,9 @@ export default function UsersPage() {
                 </tr>
               ) : (
                 users.map((u) => {
-                  const statusKey = u.status?.toLowerCase() ?? "";
+                  const statusKey = u.is_active ? "active" : "suspended";
                   const roleKey = u.role?.toLowerCase() ?? "";
-                  const isActive = statusKey === "active";
+                  const isActive = u.is_active;
                   return (
                     <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-5 py-4">
@@ -217,11 +215,11 @@ export default function UsersPage() {
                       </td>
                       <td className="px-5 py-4">
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border capitalize ${STATUS_BADGE[statusKey] ?? "bg-slate-100 text-slate-600 border-slate-200"}`}>
-                          {u.status}
+                          {statusKey}
                         </span>
                       </td>
                       <td className="px-5 py-4 font-medium text-slate-900 whitespace-nowrap">
-                        TZS {fmtTZS(u.wallet_balance)}
+                        TZS {fmtTZS(u.available_balance)}
                       </td>
                       <td className="px-5 py-4 text-slate-500 whitespace-nowrap text-xs">
                         {fmtDate(u.created_at)}

@@ -12,16 +12,22 @@ import { api } from "../../../_lib/api";
 // ---------------------------------------------------------------------------
 interface Transaction {
   id: string;
-  txn_number?: string;
   order_id?: string;
   order_number?: string;
   user_name?: string;
   type: string;
   direction?: string; // "credit" | "debit"
   amount: number;
-  fee?: number;
+  status?: string; // pending | completed | failed
+  description?: string;
   created_at: string;
 }
+
+const STATUS_STYLE: Record<string, string> = {
+  completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  pending:   "bg-amber-50 text-amber-700 border-amber-200",
+  failed:    "bg-red-50 text-red-700 border-red-200",
+};
 
 interface Totals {
   total_in: number;
@@ -47,21 +53,26 @@ const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-TZ", { day: "2-digit", month: "short", year: "numeric" });
 
 const TYPE_STYLE: Record<string, string> = {
-  escrow_hold:  "bg-indigo-50 text-indigo-700 border-indigo-200",
-  release:      "bg-emerald-50 text-emerald-700 border-emerald-200",
-  refund:       "bg-amber-50 text-amber-700 border-amber-200",
-  lui_fee:      "bg-slate-100 text-slate-600 border-slate-200",
-  fee:          "bg-slate-100 text-slate-600 border-slate-200",
+  escrow_lock:     "bg-indigo-50 text-indigo-700 border-indigo-200",
+  escrow_release:  "bg-emerald-50 text-emerald-700 border-emerald-200",
+  referral_reward: "bg-purple-50 text-purple-700 border-purple-200",
+  withdrawal:      "bg-blue-50 text-blue-700 border-blue-200",
+  topup:           "bg-teal-50 text-teal-700 border-teal-200",
+  refund:          "bg-amber-50 text-amber-700 border-amber-200",
+  lui_fee:         "bg-slate-100 text-slate-600 border-slate-200",
 };
-const typeLabel = (s: string) =>
-  s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const typeLabel = (s?: string | null) =>
+  (s ?? "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const TYPE_OPTIONS = [
-  { label: "All Types",    value: "" },
-  { label: "Escrow Hold",  value: "escrow_hold" },
-  { label: "Release",      value: "release" },
-  { label: "Refund",       value: "refund" },
-  { label: "Platform Fee", value: "lui_fee" },
+  { label: "All Types",       value: "" },
+  { label: "Escrow Lock",     value: "escrow_lock" },
+  { label: "Escrow Release",  value: "escrow_release" },
+  { label: "Referral Reward", value: "referral_reward" },
+  { label: "Withdrawal",      value: "withdrawal" },
+  { label: "Top-up",          value: "topup" },
+  { label: "Refund",          value: "refund" },
+  { label: "Platform Fee",    value: "lui_fee" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -215,7 +226,7 @@ export default function TransactionsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50">
-                {["ID", "Order #", "User", "Type", "Dir", "Amount (TZS)", "Fee (TZS)", "Date"].map((h) => (
+                {["ID", "Order #", "User", "Type", "Dir", "Amount (TZS)", "Status", "Date"].map((h) => (
                   <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide whitespace-nowrap">
                     {h}
                   </th>
@@ -239,16 +250,14 @@ export default function TransactionsPage() {
                 txns.map((t) => {
                   const typeKey = t.type?.toLowerCase() ?? "";
                   const typeStyle = TYPE_STYLE[typeKey] ?? "bg-slate-100 text-slate-600 border-slate-200";
-                  const isCredit =
-                    t.direction?.toLowerCase() === "credit" ||
-                    typeKey === "escrow_hold";
+                  const isCredit = t.direction?.toLowerCase() === "credit";
                   return (
                     <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
                           <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isCredit ? "bg-blue-500" : "bg-emerald-500"}`} />
                           <span className="font-mono text-xs font-semibold text-slate-700">
-                            {t.txn_number ?? t.id}
+                            {t.id.slice(0, 8)}
                           </span>
                         </div>
                       </td>
@@ -271,8 +280,16 @@ export default function TransactionsPage() {
                       <td className="px-5 py-4 font-semibold text-slate-900 whitespace-nowrap">
                         {fmtTZS(t.amount)}
                       </td>
-                      <td className="px-5 py-4 text-slate-500 whitespace-nowrap">
-                        {t.fee != null && Number(t.fee) > 0 ? fmtTZS(t.fee) : "—"}
+                      <td className="px-5 py-4">
+                        {(() => {
+                          const statusKey = t.status?.toLowerCase() ?? "completed";
+                          const style = STATUS_STYLE[statusKey] ?? "bg-slate-100 text-slate-500 border-slate-200";
+                          return (
+                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border capitalize whitespace-nowrap ${style}`}>
+                              {statusKey}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-5 py-4 text-slate-400 text-xs whitespace-nowrap">
                         {fmtDate(t.created_at)}

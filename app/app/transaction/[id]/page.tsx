@@ -7,7 +7,7 @@ import { userApi } from "@/app/_lib/user-api";
 import { fmt, fmtDate } from "@/app/app/_lib/fmt";
 
 interface Tx {
-  id: string; type: string; amount: string; fee: string;
+  id: string; type: string; amount: string; fee?: string;
   direction: "credit" | "debit"; description: string | null;
   status: string; created_at: string; order_number: string | null; product: string | null;
 }
@@ -36,7 +36,7 @@ export default function TransactionDetail({ params }: { params: Promise<{ id: st
   if (!tx) return <p className="text-[#8b9ab4] text-center mt-12">Transaction not found</p>;
 
   const amount = parseFloat(tx.amount);
-  const fee    = parseFloat(tx.fee || "0");
+  const fee    = parseFloat(tx.fee ?? "0");
   const gross  = amount + fee;
   const credit = tx.direction === "credit";
   const isDeposit = tx.type === "topup";
@@ -65,9 +65,13 @@ export default function TransactionDetail({ params }: { params: Promise<{ id: st
 
       {(isDeposit || isEscrowPay) && (
         <div className="bg-[#0d1f35] border border-[#1a3060] rounded-2xl p-4 space-y-3">
-          <Row label="Amount processed by LUI" value={`TZS ${fmt(gross)}`} />
-          <Row label="LUI fee (2.5%)" value={`TZS ${fmt(fee)}`} />
-          <div className="border-t border-[#1a3060]" />
+          {fee > 0 && (
+            <>
+              <Row label="Amount processed by LUI" value={`TZS ${fmt(gross)}`} />
+              <Row label="LUI fee (2.5%)" value={`TZS ${fmt(fee)}`} />
+              <div className="border-t border-[#1a3060]" />
+            </>
+          )}
           <Row label={netLabel} value={`TZS ${fmt(amount)}`} strong />
         </div>
       )}

@@ -13,11 +13,11 @@ import { api } from "../../../_lib/api";
 interface Order {
   id: string;
   order_number?: string;
-  product_title?: string;
+  product?: string;
   buyer_name?: string;
   seller_name?: string;
-  amount: number;
-  fee?: number;
+  total: number;
+  lui_fee?: number;
   status: string;
   created_at: string;
 }
@@ -47,8 +47,8 @@ const STATUS_STYLE: Record<string, string> = {
   delivered:    "bg-teal-50 text-teal-700 border-teal-200",
   ready_to_ship:"bg-indigo-50 text-indigo-700 border-indigo-200",
 };
-const statusLabel = (s: string) =>
-  s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const statusLabel = (s?: string | null) =>
+  (s ?? "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const STATUS_TABS = [
   { label: "All",        value: "" },
@@ -200,15 +200,15 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-5 py-4">
                         <p className="font-medium text-slate-900 max-w-[160px] truncate">
-                          {o.product_title ?? "—"}
+                          {o.product ?? "—"}
                         </p>
                       </td>
                       <td className="px-5 py-4 text-slate-600 whitespace-nowrap">{o.buyer_name ?? "—"}</td>
                       <td className="px-5 py-4 text-slate-600 whitespace-nowrap">{o.seller_name ?? "—"}</td>
                       <td className="px-5 py-4 font-semibold text-slate-900 whitespace-nowrap">
-                        {fmtTZS(o.amount)}
+                        {fmtTZS(o.total)}
                       </td>
-                      <td className="px-5 py-4 text-slate-500 whitespace-nowrap">{fmtTZS(o.fee)}</td>
+                      <td className="px-5 py-4 text-slate-500 whitespace-nowrap">{fmtTZS(o.lui_fee)}</td>
                       <td className="px-5 py-4">
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border whitespace-nowrap ${style}`}>
                           {statusLabel(o.status)}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Search, CheckCircle, Loader2, AlertCircle,
   ChevronLeft, ChevronRight, X,
@@ -12,13 +12,13 @@ import { api } from "../../../_lib/api";
 // ---------------------------------------------------------------------------
 interface Dispute {
   id: string;
-  dispute_number?: string;
   order_id?: string;
   order_number?: string;
   buyer_name?: string;
   seller_name?: string;
   reason?: string;
-  amount: number;
+  description?: string;
+  total: number;
   status: string;
   created_at: string;
 }
@@ -34,7 +34,8 @@ interface PagedResponse<T> {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-const fmtTZS = (v: number) => Number(v).toLocaleString("en-TZ");
+const fmtTZS = (v: number | undefined) =>
+  v != null ? Number(v).toLocaleString("en-TZ") : "—";
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-TZ", { day: "2-digit", month: "short", year: "numeric" });
 
@@ -44,8 +45,8 @@ const STATUS_STYLE: Record<string, string> = {
   resolved_seller:   "bg-emerald-50 text-emerald-700 border-emerald-200",
   resolved_buyer:    "bg-teal-50 text-teal-700 border-teal-200",
 };
-const statusLabel = (s: string) =>
-  s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+const statusLabel = (s?: string | null) =>
+  (s ?? "").replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const STATUS_TABS = [
   { label: "All",            value: "" },
@@ -100,10 +101,10 @@ function ResolveModal({ dispute, onClose, onResolved }: ResolveModalProps) {
         <div className="p-6 space-y-4">
           <div className="bg-slate-50 rounded-lg p-3 text-sm">
             <p className="font-medium text-slate-700">
-              {dispute.dispute_number ?? dispute.id}
+              {dispute.order_number ?? dispute.id}
             </p>
             <p className="text-slate-500 text-xs mt-0.5">
-              {dispute.buyer_name ?? "Buyer"} vs {dispute.seller_name ?? "Seller"} — TZS {fmtTZS(dispute.amount)}
+              {dispute.buyer_name ?? "Buyer"} vs {dispute.seller_name ?? "Seller"} — TZS {fmtTZS(dispute.total)}
             </p>
           </div>
 
@@ -176,8 +177,6 @@ function ResolveModal({ dispute, onClose, onResolved }: ResolveModalProps) {
 // ---------------------------------------------------------------------------
 export default function DisputesPage() {
   const [disputes, setDisputes] = useState<Dispute[]>([]);
-  const [total, setTotal] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -185,57 +184,53 @@ export default function DisputesPage() {
   const [error, setError] = useState<string | null>(null);
   const [resolving, setResolving] = useState<Dispute | null>(null);
 
-  // Summary counts
-  const [counts, setCounts] = useState({ open: 0, under_review: 0, resolved: 0 });
-
   const limit = 20;
 
-  const load = useCallback(async (pg = page, q = search, st = statusFilter) => {
+  // Disputes are low-volume — fetch them once (unfiltered, which is safe on every
+  // backend version) and do counts, tab filtering, search and paging on the client.
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams({ page: String(pg), limit: String(limit) });
-      if (q) params.set("search", q);
-      if (st) params.set("status", st);
-      const res = await api.get<PagedResponse<Dispute>>(`/api/v1/admin/disputes?${params}`);
+      const res = await api.get<PagedResponse<Dispute>>(`/api/v1/admin/disputes?limit=200`);
       setDisputes(res.data ?? []);
-      setTotal(res.total ?? 0);
-      setTotalPages(res.totalPages ?? 1);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load disputes");
     } finally {
       setLoading(false);
     }
-  }, [page, search, statusFilter]);
-
-  // Load summary counts (always unfiltered)
-  const loadCounts = useCallback(async () => {
-    try {
-      const [open, review, resSeller, resBuyer] = await Promise.all([
-        api.get<PagedResponse<Dispute>>("/api/v1/admin/disputes?status=open&limit=1"),
-        api.get<PagedResponse<Dispute>>("/api/v1/admin/disputes?status=under_review&limit=1"),
-        api.get<PagedResponse<Dispute>>("/api/v1/admin/disputes?status=resolved_seller&limit=1"),
-        api.get<PagedResponse<Dispute>>("/api/v1/admin/disputes?status=resolved_buyer&limit=1"),
-      ]);
-      setCounts({
-        open: open.total ?? 0,
-        under_review: review.total ?? 0,
-        resolved: (resSeller.total ?? 0) + (resBuyer.total ?? 0),
-      });
-    } catch { /* silent */ }
   }, []);
 
-  useEffect(() => { load(page, search, statusFilter); }, [page, statusFilter]); // eslint-disable-line
-  useEffect(() => { loadCounts(); }, [loadCounts]);
+  useEffect(() => { load(); }, [load]);
 
-  const handleTab = (v: string) => {
-    setStatusFilter(v);
-    setPage(1);
-    load(1, search, v);
-  };
+  const counts = useMemo(() => {
+    const c = { open: 0, under_review: 0, resolved: 0 };
+    for (const d of disputes) {
+      const s = d.status?.toLowerCase() ?? "";
+      if (s === "open") c.open++;
+      else if (s === "under_review") c.under_review++;
+      else if (s.startsWith("resolved")) c.resolved++;
+    }
+    return c;
+  }, [disputes]);
 
-  const from = (page - 1) * limit + 1;
-  const to = Math.min(page * limit, total);
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return disputes.filter((d) => {
+      if (statusFilter && (d.status?.toLowerCase() ?? "") !== statusFilter) return false;
+      if (!q) return true;
+      return [d.id, d.order_number, d.buyer_name, d.seller_name, d.reason]
+        .some((f) => f?.toLowerCase().includes(q));
+    });
+  }, [disputes, statusFilter, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / limit));
+  const pageSafe = Math.min(page, totalPages);
+  const pageRows = filtered.slice((pageSafe - 1) * limit, pageSafe * limit);
+  const from = filtered.length === 0 ? 0 : (pageSafe - 1) * limit + 1;
+  const to = Math.min(pageSafe * limit, filtered.length);
+
+  const handleTab = (v: string) => { setStatusFilter(v); setPage(1); };
 
   return (
     <div className="space-y-6">
@@ -243,7 +238,7 @@ export default function DisputesPage() {
         <ResolveModal
           dispute={resolving}
           onClose={() => setResolving(null)}
-          onResolved={() => { load(page, search, statusFilter); loadCounts(); }}
+          onResolved={() => { load(); }}
         />
       )}
 
@@ -298,7 +293,7 @@ export default function DisputesPage() {
           <input
             type="text"
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); load(1, e.target.value, statusFilter); }}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search disputes by ID, buyer, or seller…"
             className="w-full h-9 pl-9 pr-4 rounded-lg border border-slate-200 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#4361EE]/30 focus:border-[#4361EE]"
           />
@@ -325,21 +320,21 @@ export default function DisputesPage() {
                     <Loader2 className="w-5 h-5 animate-spin text-slate-400 mx-auto" />
                   </td>
                 </tr>
-              ) : disputes.length === 0 ? (
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="px-5 py-12 text-center text-sm text-slate-400">
                     No disputes found
                   </td>
                 </tr>
               ) : (
-                disputes.map((d) => {
+                pageRows.map((d) => {
                   const statusKey = d.status?.toLowerCase() ?? "";
                   const style = STATUS_STYLE[statusKey] ?? "bg-slate-100 text-slate-500 border-slate-200";
                   const isResolved = statusKey.startsWith("resolved");
                   return (
                     <tr key={d.id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-5 py-4 font-mono text-xs font-semibold text-slate-700">
-                        {d.dispute_number ?? d.id}
+                        {d.id.slice(0, 8)}
                       </td>
                       <td className="px-5 py-4 font-mono text-xs text-[#4361EE] font-semibold">
                         {d.order_number ?? d.order_id ?? "—"}
@@ -347,10 +342,12 @@ export default function DisputesPage() {
                       <td className="px-5 py-4 text-slate-700 whitespace-nowrap">{d.buyer_name ?? "—"}</td>
                       <td className="px-5 py-4 text-slate-500 whitespace-nowrap">{d.seller_name ?? "—"}</td>
                       <td className="px-5 py-4 max-w-[180px]">
-                        <p className="text-slate-600 truncate">{d.reason ?? "—"}</p>
+                        <p className="text-slate-600 truncate" title={d.description ?? undefined}>
+                          {d.reason ? statusLabel(d.reason) : "—"}
+                        </p>
                       </td>
                       <td className="px-5 py-4 font-semibold text-slate-900 whitespace-nowrap">
-                        {fmtTZS(d.amount)}
+                        {fmtTZS(d.total)}
                       </td>
                       <td className="px-5 py-4">
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border whitespace-nowrap ${style}`}>
@@ -382,22 +379,22 @@ export default function DisputesPage() {
         {/* Pagination */}
         <div className="px-5 py-3.5 border-t border-slate-100 flex items-center justify-between flex-wrap gap-3">
           <p className="text-sm text-slate-500">
-            {total > 0 ? `Showing ${from}–${to} of ${total.toLocaleString("en-TZ")} disputes` : "No disputes"}
+            {filtered.length > 0 ? `Showing ${from}–${to} of ${filtered.length.toLocaleString("en-TZ")} disputes` : "No disputes"}
           </p>
           <div className="flex items-center gap-1">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1 || loading}
+              disabled={pageSafe === 1 || loading}
               className="h-8 w-8 flex items-center justify-center rounded text-slate-600 hover:bg-slate-100 disabled:opacity-40 transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="px-3 h-8 flex items-center text-sm font-medium text-slate-700">
-              {page} / {totalPages}
+              {pageSafe} / {totalPages}
             </span>
             <button
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages || loading}
+              disabled={pageSafe === totalPages || loading}
               className="h-8 w-8 flex items-center justify-center rounded text-slate-600 hover:bg-slate-100 disabled:opacity-40 transition-colors"
             >
               <ChevronRight className="w-4 h-4" />

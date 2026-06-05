@@ -11,15 +11,15 @@ import { api } from "../../../_lib/api";
 // Types
 // ---------------------------------------------------------------------------
 interface WalletRow {
-  id: string;
-  owner_name?: string;
-  owner_email?: string;
+  wallet_id: string;
+  user_id?: string;
+  owner?: string;
+  email?: string;
   role?: string;
-  balance?: number;
   available_balance?: number;
   frozen_balance?: number;
-  transaction_count?: number;
-  status: string;
+  tx_count?: number;
+  is_active?: boolean;
 }
 
 interface WalletTotals {
@@ -197,14 +197,14 @@ export default function WalletsPage() {
                 </tr>
               ) : (
                 wallets.map((w) => {
-                  const statusKey = w.status?.toLowerCase() ?? "";
+                  const statusKey = w.is_active ? "active" : "frozen";
                   const roleKey = w.role?.toLowerCase() ?? "";
-                  const totalBalance = (w.balance ?? 0) || ((w.available_balance ?? 0) + (w.frozen_balance ?? 0));
+                  const totalBalance = (w.available_balance ?? 0) + (w.frozen_balance ?? 0);
                   const held = w.frozen_balance ?? 0;
                   const available = w.available_balance ?? 0;
-                  const ownerName = w.owner_name ?? "Unknown";
+                  const ownerName = w.owner ?? "Unknown";
                   return (
-                    <tr key={w.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={w.wallet_id} className="hover:bg-slate-50/50 transition-colors">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-8 h-8 rounded-full bg-[#4361EE]/10 flex items-center justify-center flex-shrink-0">
@@ -216,7 +216,7 @@ export default function WalletsPage() {
                         </div>
                       </td>
                       <td className="px-5 py-4 text-xs text-slate-400 whitespace-nowrap">
-                        {w.owner_email ?? "—"}
+                        {w.email ?? "—"}
                       </td>
                       <td className="px-5 py-4">
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border capitalize ${ROLE_STYLE[roleKey] ?? "bg-slate-100 text-slate-600 border-slate-200"}`}>
@@ -236,11 +236,11 @@ export default function WalletsPage() {
                         TZS {fmtTZS(available)}
                       </td>
                       <td className="px-5 py-4 text-slate-600">
-                        {(w.transaction_count ?? 0).toLocaleString("en-TZ")}
+                        {(w.tx_count ?? 0).toLocaleString("en-TZ")}
                       </td>
                       <td className="px-5 py-4">
                         <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border capitalize whitespace-nowrap ${STATUS_STYLE[statusKey] ?? "bg-slate-100 text-slate-600 border-slate-200"}`}>
-                          {w.status}
+                          {statusKey}
                         </span>
                       </td>
                     </tr>

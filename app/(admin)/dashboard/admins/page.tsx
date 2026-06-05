@@ -13,7 +13,8 @@ interface AdminUser {
   id: string;
   name: string;
   email: string;
-  status: string;
+  role: string;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -51,8 +52,10 @@ export default function AdminsPage() {
     setLoadingList(true);
     setListError(null);
     try {
-      const res = await api.get<PagedResponse<AdminUser>>("/api/v1/admin/users?role=admin&limit=100");
-      setAdmins(res.data ?? []);
+      // Fetch unfiltered (safe on every backend version) and pick out admins client-side —
+      // the server-side role filter triggers a parameter bug on older deploys.
+      const res = await api.get<PagedResponse<AdminUser>>("/api/v1/admin/users?limit=200");
+      setAdmins((res.data ?? []).filter((u) => u.role === "admin"));
     } catch (e: unknown) {
       setListError(e instanceof Error ? e.message : "Failed to load admins");
     } finally {
@@ -132,8 +135,7 @@ export default function AdminsPage() {
           ) : (
             <div className="divide-y divide-slate-100">
               {admins.map((a) => {
-                const statusKey = a.status?.toLowerCase() ?? "";
-                const isActive = statusKey === "active";
+                const isActive = a.is_active;
                 return (
                   <div key={a.id} className="px-5 py-3.5 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-[#4361EE]/10 flex items-center justify-center flex-shrink-0">
@@ -151,7 +153,7 @@ export default function AdminsPage() {
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                           : "bg-red-50 text-red-700 border-red-200"
                       }`}>
-                        {a.status}
+                        {isActive ? "active" : "suspended"}
                       </span>
                       <span className="text-[10px] text-slate-400">Joined {fmtDate(a.created_at)}</span>
                     </div>
