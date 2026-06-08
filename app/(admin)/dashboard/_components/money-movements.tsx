@@ -23,8 +23,10 @@ interface Movement {
 }
 
 interface Totals {
+  settled_count: number;
   total_in: number;
   total_out: number;
+  total_settled_fees: number;
   total_fees: number;
 }
 
@@ -61,7 +63,7 @@ export function MoneyMovements({ kind }: { kind: "deposit" | "withdrawal" }) {
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [page, setPage] = useState(1);
-  const [totals, setTotals] = useState<Totals>({ total_in: 0, total_out: 0, total_fees: 0 });
+  const [totals, setTotals] = useState<Totals>({ settled_count: 0, total_in: 0, total_out: 0, total_settled_fees: 0, total_fees: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,6 +92,8 @@ export function MoneyMovements({ kind }: { kind: "deposit" | "withdrawal" }) {
   const from = (page - 1) * limit + 1;
   const to = Math.min(page * limit, total);
   const settledTotal = isDeposit ? totals.total_in : totals.total_out;
+  const settledCount = Number(totals.settled_count ?? 0);
+  const feesEarned   = Number(totals.total_settled_fees ?? 0);
 
   return (
     <div className="space-y-6">
@@ -107,7 +111,7 @@ export function MoneyMovements({ kind }: { kind: "deposit" | "withdrawal" }) {
       )}
 
       {/* Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4">
           <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${isDeposit ? "bg-emerald-50" : "bg-blue-50"}`}>
             <Icon className={`w-5 h-5 ${isDeposit ? "text-emerald-600" : "text-blue-600"}`} />
@@ -117,6 +121,17 @@ export function MoneyMovements({ kind }: { kind: "deposit" | "withdrawal" }) {
               {isDeposit ? "Total Deposited" : "Total Withdrawn"}
             </p>
             <p className="text-xl font-bold text-slate-900">TZS {fmtTZS(settledTotal)}</p>
+            <p className="text-xs text-slate-400 mt-0.5">{settledCount.toLocaleString("en-TZ")} settled</p>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-lg bg-violet-50 flex items-center justify-center flex-shrink-0">
+            <Icon className="w-5 h-5 text-violet-600" />
+          </div>
+          <div>
+            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Fees Earned</p>
+            <p className="text-xl font-bold text-slate-900">TZS {fmtTZS(feesEarned)}</p>
+            <p className="text-xs text-slate-400 mt-0.5">From completed only</p>
           </div>
         </div>
         <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4">
@@ -124,8 +139,9 @@ export function MoneyMovements({ kind }: { kind: "deposit" | "withdrawal" }) {
             <Icon className="w-5 h-5 text-slate-500" />
           </div>
           <div>
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">Records</p>
+            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">All Records</p>
             <p className="text-xl font-bold text-slate-900">{total.toLocaleString("en-TZ")}</p>
+            <p className="text-xs text-slate-400 mt-0.5">Including pending &amp; failed</p>
           </div>
         </div>
       </div>

@@ -34,8 +34,8 @@ export default function RegisterPage() {
     if (form.password.length < 8) { setError("Password must be at least 8 characters"); return; }
     setError("");
     setLoading(true);
+    const canonicalEmail = form.email.trim().toLowerCase();
     try {
-      const canonicalEmail = form.email.trim().toLowerCase();
       await api.post("/api/v1/auth/register", {
         name: form.name.trim(),
         email: canonicalEmail || undefined,
@@ -46,15 +46,18 @@ export default function RegisterPage() {
           ? { businessName: form.businessName.trim() }
           : {}),
       });
-      // Explicitly trigger the verification OTP email after account creation
-      await api.post("/api/v1/auth/send-otp", { email: canonicalEmail, purpose: "verify_phone" });
-      setForm((f) => ({ ...f, email: canonicalEmail })); // ensure lowercase for OTP lookup
-      setStep("otp");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
-    } finally {
       setLoading(false);
+      return;
     }
+    // Registration succeeded — send OTP but don't block step transition if it fails
+    try {
+      await api.post("/api/v1/auth/send-otp", { email: canonicalEmail, purpose: "verify_phone" });
+    } catch { /* user can resend from the OTP step */ }
+    setForm((f) => ({ ...f, email: canonicalEmail }));
+    setLoading(false);
+    setStep("otp");
   };
 
   const handleOtp = async (e: React.FormEvent) => {
